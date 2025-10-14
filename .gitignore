@@ -1,0 +1,56 @@
+# ── .NET & build artifacts ─────────────────────────────────────────────────────
+bin/
+obj/
+out/
+artifacts/
+TestResults/
+*.cache/
+*.ide/
+*.pidb
+*.svclog
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+.nuget/
+packages/
+project.lock.json
+packages.lock.json
+
+# Logs & diagnostics
+*.log
+logs/
+*.etl
+*.dmp
+DumpStack.log*
+
+# Coverage
+coverage/
+*.coverage
+*.coveragexml
+*.opencover.xml
+coverage.cobertura.xml
+
+# Publish outputs
+publish/
+*.Publish.xml
+
+# ── IDEs ───────────────────────────────────────────────────────────────────────
+# Visual Studio
+.vs/
+
+# JetBrains Rider
+.idea/
+*.iml
+
+# VS Code (keep common shared files)
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.j
