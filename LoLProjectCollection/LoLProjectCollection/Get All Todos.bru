@@ -1,0 +1,15 @@
+meta {
+  name: Get All Todos
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://localhost:5284/api/todo
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}
