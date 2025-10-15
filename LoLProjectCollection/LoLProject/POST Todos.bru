@@ -1,0 +1,19 @@
+meta {
+  name: POST Todos
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:5284/api/todo
+  body: json
+  auth: inherit
+}
+
+body:json {
+  { "title": "faire l'amour à mélène", "done": true }
+}
+
+settings {
+  encodeUrl: true
+}

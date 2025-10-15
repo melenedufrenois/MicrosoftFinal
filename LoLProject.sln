@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoLProject.ServiceDefaults"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoLProject.ApiService", "LoLProject.ApiService\LoLProject.ApiService.csproj", "{E32F18B2-3B63-45FE-B65C-B500717E09F3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoLProject.Persistence", "LoLProject.Persistence\LoLProject.Persistence.csproj", "{30CA6527-EB6A-4F85-A751-ECC311383FFD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{E32F18B2-3B63-45FE-B65C-B500717E09F3}.Release|x64.Build.0 = Release|Any CPU
 		{E32F18B2-3B63-45FE-B65C-B500717E09F3}.Release|x86.ActiveCfg = Release|Any CPU
 		{E32F18B2-3B63-45FE-B65C-B500717E09F3}.Release|x86.Build.0 = Release|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Debug|x64.Build.0 = Debug|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Debug|x86.Build.0 = Debug|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Release|x64.ActiveCfg = Release|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Release|x64.Build.0 = Release|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Release|x86.ActiveCfg = Release|Any CPU
+		{30CA6527-EB6A-4F85-A751-ECC311383FFD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
