@@ -17,4 +17,18 @@ public sealed class TodoClient : ITodoClient
         resp.EnsureSuccessStatusCode();
         return (await resp.Content.ReadFromJsonAsync<TodoItem>())!;
     }
+
+    public async Task<TodoItem?> UpdateTodoItemAsync(int id, TodoItem item)
+    {
+        var resp = await _http.PutAsJsonAsync($"/api/todo/{id}", item);
+        if (!resp.IsSuccessStatusCode) return null;
+        // PUT renvoie 204 NoContent dans ton API → retourne l’objet passé
+        return item;
+    }
+
+    public async Task DeleteTodoItemAsync(int id)
+    {
+        var resp = await _http.DeleteAsync($"/api/todo/{id}");
+        resp.EnsureSuccessStatusCode();
+    }
 }

@@ -25,6 +25,12 @@ builder.Services.AddHttpClient<ITodoClient, TodoClient>((sp, client) =>
     ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
 });
 
+builder.Services.AddHttpClient("api", (sp, c) =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>();
+    c.BaseAddress = new Uri(cfg["services:apiservice:http:0"]!); // HTTP Aspire
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
