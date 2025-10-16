@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LoLProject.ApiService\LoLProject.ApiService.csproj" />
+    <ProjectReference Include="..\LoLProject.WebApp\LoLProject.WebApp.csproj" />
   </ItemGroup>
 
 </Project>
