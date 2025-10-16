@@ -57,11 +57,7 @@ publish/
 
 # Windows reserved names
 nul
-con
-prn
-aux
-com*
-lpt*
+
 
 # Bruno exports
 *.bru

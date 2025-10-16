@@ -1,0 +1,33 @@
+@page "/todos"
+@using LoLProject.WebApp.Clients
+@using LoLProject.Persistence.Models
+@inject ITodoClient httpClient
+
+<h3>Todos</h3>
+
+@if (todos is null)
+{
+    <p>Loading ...</p>
+}
+else if (todos.Count == 0)
+{
+    <p>Aucun item.</p>
+}
+else
+{
+    <ul>
+        @foreach (var todo in todos)
+        {
+            <li>@todo.Title (@(todo.Done ? "✓" : "✗"))</li>
+        }
+    </ul>
+}
+
+@code {
+    private List<TodoItem>? todos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        todos = await httpClient.GetTodoItemsAsync();
+    }
+}

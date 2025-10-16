@@ -1,0 +1,11 @@
+
+<form method="post" @onsubmit="Submit" @formname="add-todo-item-form">
+    <AntiforgeryToken/>
+    <h4>Add a new todo</h4>
+    <div class="mb-3">
+        <label for="todoItem" class="form-label">Title</label>
+        <InputText type="text" class="form-control" id="todoItem" placeholder="Enter todo item"
+                   @bind-Value="Model!.Title" required/>
+    </div>
+    <button type="submit" class="btn btn-primary">Add Title</button>
+</form>
