@@ -2,49 +2,54 @@
 @using LoLProject.Persistence.Models
 @inject ITodoClient Client
 
-<form method="post" @onsubmit="Submit" @formname="add-todo-item-form">
-    <AntiforgeryToken />
+<EditForm EditContext="editContext" OnValidSubmit="Submit" FormName="add-todo-item-form">
     <h4>Add a new todo</h4>
 
     <div class="mb-3">
         <label for="todoItem" class="form-label">Title</label>
-        <InputText type="text"
-                   class="form-control"
-                   id="todoItem"
-                   placeholder="Enter todo item"
-                   @bind-Value="Model!.Title"
-                   required />
+        <InputText id="todoItem" class="form-control" @bind-Value="Model!.Title" />
+    </div>
+
+    <div>
+        <ValidationMessage For="() => Model!.Title" />
     </div>
 
     <button type="submit" class="btn btn-primary">Add Title</button>
-</form>
+</EditForm>
 
 @code {
-    [SupplyParameterFromForm]
-    private TodoFormItem? Model { get; set; }
+    [SupplyParameterFromForm] private TodoFormItem? Model { get; set; }
+    private EditContext? editContext;
+    private ValidationMessageStore? messageStore;
 
-    [Parameter] public EventCallback OnAdded { get; set; }
+    [Parameter] public EventCallback OnTodoAdded { get; set; }
 
     protected override void OnInitialized()
-        => Model ??= new TodoFormItem();
+    {
+        Model ??= new TodoFormItem();
+        editContext = new EditContext(Model);
+        messageStore = new ValidationMessageStore(editContext);
+        editContext.OnValidationRequested += HandleValidationRequested;
+    }
+
+    private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs args)
+    {
+        messageStore!.Clear();
+        if (string.IsNullOrWhiteSpace(Model!.Title))
+            messageStore.Add(() => Model.Title, "Title is required.");
+        if (Model.Title.Length > 100)
+            messageStore.Add(() => Model.Title, "Title cannot exceed 100 characters.");
+    }
 
     private async Task Submit()
     {
-        if (Model is null) return;
-
-        await Client.CreateTodoItemAsync(new TodoItem
-        {
-            Id = 0,
-            Title = Model.Title,
-            Done = false
-        });
-
-        Model.Title = string.Empty;          // reset champ
-        await OnAdded.InvokeAsync();         // notifier la page
+        await Client.CreateTodoItemAsync(new TodoItem { Id = 0, Title = Model!.Title, Done = false });
+        await OnTodoAdded.InvokeAsync();
+        Model = new TodoFormItem();
+        editContext = new EditContext(Model);
+        messageStore = new ValidationMessageStore(editContext);
+        editContext.OnValidationRequested += HandleValidationRequested;
     }
 
-    public sealed class TodoFormItem
-    {
-        public string Title { get; set; } = string.Empty;
-    }
+    public sealed class TodoFormItem { public string Title { get; set; } = string.Empty; }
 }
