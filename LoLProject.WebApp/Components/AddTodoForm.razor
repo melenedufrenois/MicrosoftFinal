@@ -1,0 +1,50 @@
+@using LoLProject.WebApp.Clients
+@using LoLProject.Persistence.Models
+@inject ITodoClient Client
+
+<form method="post" @onsubmit="Submit" @formname="add-todo-item-form">
+    <AntiforgeryToken />
+    <h4>Add a new todo</h4>
+
+    <div class="mb-3">
+        <label for="todoItem" class="form-label">Title</label>
+        <InputText type="text"
+                   class="form-control"
+                   id="todoItem"
+                   placeholder="Enter todo item"
+                   @bind-Value="Model!.Title"
+                   required />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add Title</button>
+</form>
+
+@code {
+    [SupplyParameterFromForm]
+    private TodoFormItem? Model { get; set; }
+
+    [Parameter] public EventCallback OnAdded { get; set; }
+
+    protected override void OnInitialized()
+        => Model ??= new TodoFormItem();
+
+    private async Task Submit()
+    {
+        if (Model is null) return;
+
+        await Client.CreateTodoItemAsync(new TodoItem
+        {
+            Id = 0,
+            Title = Model.Title,
+            Done = false
+        });
+
+        Model.Title = string.Empty;          // reset champ
+        await OnAdded.InvokeAsync();         // notifier la page
+    }
+
+    public sealed class TodoFormItem
+    {
+        public string Title { get; set; } = string.Empty;
+    }
+}

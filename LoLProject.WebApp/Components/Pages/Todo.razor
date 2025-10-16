@@ -1,0 +1,32 @@
+@page "/todos"
+@using LoLProject.WebApp.Clients
+@using LoLProject.Persistence.Models
+@inject ITodoClient Http
+
+<h3>Todos</h3>
+
+<AddTodoForm OnAdded="Reload" />
+
+@if (todos is null)
+{
+    <p>Loading ...</p>
+}
+else
+{
+    <ul>
+        @foreach (var t in todos)
+        {
+            <li>@t.Title</li>
+        }
+    </ul>
+}
+
+@code {
+    private List<TodoItem>? todos;
+
+    protected override async Task OnInitializedAsync()
+        => await Reload();
+
+    private async Task Reload()
+        => todos = await Http.GetTodoItemsAsync() ?? new();
+}
