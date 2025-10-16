@@ -1,0 +1,55 @@
+@using LoLProject.WebApp.Clients
+@using LoLProject.Persistence.Models
+@inject ITodoClient Client
+
+<EditForm EditContext="editContext" OnValidSubmit="Submit" FormName="add-todo-item-form">
+    <h4>Add a new todo</h4>
+
+    <div class="mb-3">
+        <label for="todoItem" class="form-label">Title</label>
+        <InputText id="todoItem" class="form-control" @bind-Value="Model!.Title" />
+    </div>
+
+    <div>
+        <ValidationMessage For="() => Model!.Title" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Add Title</button>
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm] private TodoFormItem? Model { get; set; }
+    private EditContext? editContext;
+    private ValidationMessageStore? messageStore;
+
+    [Parameter] public EventCallback OnTodoAdded { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Model ??= new TodoFormItem();
+        editContext = new EditContext(Model);
+        messageStore = new ValidationMessageStore(editContext);
+        editContext.OnValidationRequested += HandleValidationRequested;
+    }
+
+    private void HandleValidationRequested(object? sender, ValidationRequestedEventArgs args)
+    {
+        messageStore!.Clear();
+        if (string.IsNullOrWhiteSpace(Model!.Title))
+            messageStore.Add(() => Model.Title, "Title is required.");
+        if (Model.Title.Length > 100)
+            messageStore.Add(() => Model.Title, "Title cannot exceed 100 characters.");
+    }
+
+    private async Task Submit()
+    {
+        await Client.CreateTodoItemAsync(new TodoItem { Id = 0, Title = Model!.Title, Done = false });
+        await OnTodoAdded.InvokeAsync();
+        Model = new TodoFormItem();
+        editContext = new EditContext(Model);
+        messageStore = new ValidationMessageStore(editContext);
+        editContext.OnValidationRequested += HandleValidationRequested;
+    }
+
+    public sealed class TodoFormItem { public string Title { get; set; } = string.Empty; }
+}

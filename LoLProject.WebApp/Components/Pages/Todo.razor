@@ -1,0 +1,122 @@
+@rendermode InteractiveServer
+
+@page "/todos"
+@using LoLProject.WebApp.Clients
+@using LoLProject.Persistence.Models
+@inject ITodoClient Http
+
+<h3>Todos</h3>
+
+<AddTodoForm OnTodoAdded="Reload" />
+
+@if (todos is null)
+{
+    <p>Loading ...</p>
+}
+else if (todos.Count == 0)
+{
+    <p>Aucun todo.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th style="width:50%">Title</th>
+            <th style="width:15%">Done</th>
+            <th style="width:35%"></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var t in todos)
+        {
+            var isEditing = editingId == t.Id;
+            <tr>
+                <td>
+                    @if (isEditing)
+                    {
+                        <input class="form-control" @bind="editTitle" />
+                    }
+                    else
+                    {
+                        @t.Title
+                    }
+                </td>
+                <td>
+                    @if (isEditing)
+                    {
+                        <input type="checkbox" class="form-check-input" @bind="editDone" />
+                    }
+                    else
+                    {
+                        <input type="checkbox" class="form-check-input" checked="@t.Done" disabled />
+                    }
+                </td>
+                <td class="d-flex gap-2">
+                    @if (!isEditing)
+                    {
+                        <button class="btn btn-primary" @onclick="() => BeginEdit(t)">Edit</button>
+                        <button class="btn btn-danger"  @onclick="() => Delete(t)">Delete</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-primary" @onclick="SaveEdit">Save</button>
+                        <button class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TodoItem>? todos;
+
+    // état d’édition inline
+    private int? editingId;
+    private string editTitle = "";
+    private bool editDone;
+
+    protected override async Task OnInitializedAsync() => await Reload();
+
+    private async Task Reload()
+        => todos = await Http.GetTodoItemsAsync() ?? new();
+
+    private void BeginEdit(TodoItem t)
+    {
+        editingId = t.Id;
+        editTitle = t.Title;
+        editDone = t.Done;
+    }
+
+    private void CancelEdit()
+    {
+        editingId = null;
+        editTitle = "";
+        editDone = false;
+    }
+
+    private async Task SaveEdit()
+    {
+        if (editingId is null) return;
+        var id = editingId.Value;
+
+        var updated = new TodoItem { Id = id, Title = editTitle, Done = editDone };
+        await Http.UpdateTodoItemAsync(id, updated);
+
+        // maj locale
+        var idx = todos!.FindIndex(x => x.Id == id);
+        if (idx >= 0) todos![idx] = updated;
+
+        CancelEdit();
+        StateHasChanged();
+    }
+
+    private async Task Delete(TodoItem t)
+    {
+        await Http.DeleteTodoItemAsync(t.Id);
+        todos!.RemoveAll(x => x.Id == t.Id);
+        StateHasChanged();
+    }
+}

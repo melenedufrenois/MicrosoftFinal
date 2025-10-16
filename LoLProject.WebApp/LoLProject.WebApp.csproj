@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\LoLProject.ApiService\LoLProject.ApiService.csproj" />
+    <ProjectReference Include="..\LoLProject.ServiceDefaults\LoLProject.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\LoLProject.Persistence\LoLProject.Persistence.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
