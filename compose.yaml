@@ -1,6 +1,4 @@
-﻿version: "3.9"
-
-services:
+﻿services:
 
   sql:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -13,31 +11,33 @@ services:
     volumes:
       - sql_data:/var/opt/mssql
 
-  apiservice:
+  lol_api:
     container_name: lol_api
     build:
       context: .
       dockerfile: LoLProject.ApiService/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__Default: "Server=sql;Database=lolproject;User Id=sa;Password=YourStrong_Password123!;TrustServerCertificate=True;"
+      # IMPORTANT : la ConnectionString que ton API attend
+      ConnectionStrings__lolproject: "Server=lol_sql;Database=lolproject;User Id=sa;Password=YourStrong_Password123!;TrustServerCertificate=True;"
     ports:
       - "5284:8080"
     depends_on:
       - sql
 
-  webapp:
+  lol_webapp:
     container_name: lol_webapp
     build:
       context: .
       dockerfile: LoLProject.WebApp/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      services__apiservice__http__0: "http://apiservice:8080"
+      # URL du service API résolu par Docker (pas localhost !)
+      services__apiservice__http__0: "http://lol_api:8080"
     ports:
       - "7209:8080"
     depends_on:
-      - apiservice
+      - lol_api
 
 volumes:
   sql_data:
