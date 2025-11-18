@@ -3,11 +3,11 @@
 @inject ITodoClient Client
 
 <EditForm EditContext="editContext" OnValidSubmit="Submit" FormName="add-todo-item-form">
-    <h4>Add a new todo</h4>
+    <h4>Add new todo</h4>
 
     <div class="mb-3">
         <label for="todoItem" class="form-label">Title</label>
-        <InputText id="todoItem" class="form-control" @bind-Value="Model!.Title" />
+        <InputText id="todoItem" type="text" class="form-control" placeholder="Entrez un todo" @bind-Value="Model!.Title" required />
     </div>
 
     <div>

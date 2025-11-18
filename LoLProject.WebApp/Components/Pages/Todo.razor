@@ -1,8 +1,11 @@
 @rendermode InteractiveServer
 
 @page "/todos"
+@attribute [Authorize]
+
 @using LoLProject.WebApp.Clients
 @using LoLProject.Persistence.Models
+@using Microsoft.AspNetCore.Authorization
 @inject ITodoClient Http
 
 <h3>Todos</h3>

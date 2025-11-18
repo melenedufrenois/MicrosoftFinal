@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.1" />
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.0.0" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -11,9 +11,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.5.1" />
-    <PackageReference Include="Aspire.Hosting.Keycloak" Version="9.5.1-preview.1.25502.11" />
-    <PackageReference Include="Aspire.Hosting.SqlServer" Version="9.5.1" />
+    <!-- ✅ Aligné sur Aspire 13 -->
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.0.0" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.0.0" />
+
+    <!-- ✅ Keycloak reste en preview compatible 13 -->
+    <PackageReference Include="Aspire.Hosting.Keycloak" Version="13.0.0-preview.1.25560.3" />
+
+    <!-- EF Core, pas besoin de toucher -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.9" />
   </ItemGroup>
 

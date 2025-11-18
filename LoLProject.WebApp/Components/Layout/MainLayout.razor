@@ -1,4 +1,6 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Navigation
+@inherits LayoutComponentBase
 
 <div class="page">
     <div class="sidebar">
@@ -6,8 +8,41 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
+        <div class="top-row px-4 d-flex align-items-center">
             <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+
+            <div class="ms-auto d-flex align-items-center">
+                <AuthorizeView>
+                    <Authorized Context="auth">
+                        @{
+                            var user = auth.User;
+                            var name = user.Identity?.Name ?? "Utilisateur";
+                            var roles = user.Claims
+                                .Where(c => c.Type == "roles")
+                                .Select(c => c.Value)
+                                .ToList();
+                        }
+
+                        <div class="me-3 text-end">
+                            <div>@name</div>
+                            @if (roles.Any())
+                            {
+                                <small>Rôles : @string.Join(", ", roles)</small>
+                            }
+                        </div>
+
+                        <button class="btn btn-outline-primary btn-sm" @onclick="Logout">
+                            Se déconnecter
+                        </button>
+                    </Authorized>
+
+                    <NotAuthorized>
+                        <button class="btn btn-outline-primary btn-sm" @onclick="Login">
+                            Se connecter
+                        </button>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
         </div>
 
         <article class="content px-4">
@@ -21,3 +56,16 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code {
+    private void Login()
+    {
+        var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+        Navigation.NavigateTo($"authentication/login?returnUrl={returnUrl}", forceLoad: true);
+    }
+
+    private void Logout()
+    {
+        Navigation.NavigateTo("/authentication/logout", forceLoad: true);
+    }
+}
