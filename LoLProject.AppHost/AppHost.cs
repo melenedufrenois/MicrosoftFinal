@@ -10,6 +10,10 @@ var apiService = builder.AddProject<Projects.LoLProject_ApiService>("apiservice"
     .WithReference(db)
     .WaitFor(db);
 
+var keycloack = builder.AddKeycloak("keycloak", 8090)
+    .WithDataVolume()
+    .WithLifetime(ContainerLifetime.Persistent);
+
 builder.AddProject<Projects.LoLProject_WebApp>("webapp")
     .WithReference(apiService)
     .WaitFor(apiService);
