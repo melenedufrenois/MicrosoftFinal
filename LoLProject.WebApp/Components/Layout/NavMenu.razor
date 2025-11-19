@@ -1,29 +1,37 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">LoLProject.WebApp</a>
-    </div>
-</div>
+﻿@using MudBlazor
+@using Microsoft.AspNetCore.Components.Authorization
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<MudNavMenu>
+    <!-- Lien Public : Accueil / Recherche -->
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Search">
+        Recherche
+    </MudNavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+    <!-- Lien Authentifié : Dashboard / Favoris -->
+    <AuthorizeView>
+        <Authorized>
+            <MudNavLink Href="dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Dashboard">
+                Mes Favoris
+            </MudNavLink>
+        </Authorized>
+    </AuthorizeView>
 
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="/todos">
-                        <span class="oi oi-list-rich" aria-hidden="true"></span> Todos
-                    </NavLink>
-                </div>
-            </Authorized>
-        </AuthorizeView>
-    </nav>
-</div>
+    <!-- Lien Rôle "gestionnaire" (Ton ancien lien Todo) -->
+    <AuthorizeView Roles="gestionnaire">
+        <Authorized>
+            <MudNavLink Href="todo" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">
+                Tâches Gestionnaire
+            </MudNavLink>
+        </Authorized>
+    </AuthorizeView>
 
+    <!-- Lien Rôle "admin" (Pour le projet LoL) -->
+    <AuthorizeView Roles="admin">
+        <Authorized>
+            <MudNavLink Href="admin" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AdminPanelSettings">
+                Administration
+            </MudNavLink>
+        </Authorized>
+    </AuthorizeView>
+
+</MudNavMenu>

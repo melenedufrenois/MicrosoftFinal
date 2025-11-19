@@ -1,0 +1,28 @@
+@page "/admin"
+@using LoLProject.WebApp.Clients
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin")]
+@inject SummonerClient SummonerService
+
+<MudText Typo="Typo.h4" GutterBottom="true">Administration</MudText>
+
+<MudTable Items="@users" Hover="true">
+    <HeaderContent>
+        <MudTh>Nom Invocateur</MudTh>
+        <MudTh>Tag</MudTh>
+        <MudTh>Nombre de followers</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd>@context.GameName</MudTd>
+        <MudTd>@context.TagLine</MudTd>
+        <MudTd>@context.Followers</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    List<SummonerClient.SummonerDto> users = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await SummonerService.GetAdminListAsync();
+    }
+}

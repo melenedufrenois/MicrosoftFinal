@@ -1,0 +1,44 @@
+@page "/details/{Puuid}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using LoLProject.WebApp.Clients
+@using MudBlazor
+@inject SummonerClient SummonerService
+
+<MudText Typo="Typo.h4">Historique des matchs</MudText>
+
+@if(matches == null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudTable Items="@matches">
+        <HeaderContent>
+            <MudTh>Champion</MudTh>
+            <MudTh>KDA</MudTh>
+            <MudTh>Résultat</MudTh>
+            <MudTh>Date</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>@context.ChampionName</MudTd>
+            <MudTd>@context.Kills / @context.Deaths / @context.Assists</MudTd>
+            <MudTd>
+                <!-- CORRECTION ICI : Ajout de T="string" -->
+                <MudChip T="string" Color="@(context.Win ? Color.Success : Color.Error)">
+                    @(context.Win ? "Victoire" : "Défaite")
+                </MudChip>
+            </MudTd>
+            <MudTd>@context.GameCreation.ToShortDateString()</MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    [Parameter] public string Puuid { get; set; } = "";
+    List<SummonerClient.MatchDto>? matches;
+
+    protected override async Task OnInitializedAsync()
+    {
+        matches = await SummonerService.GetMatchesAsync(Puuid);
+    }
+}

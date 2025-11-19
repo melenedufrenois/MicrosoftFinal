@@ -9,151 +9,126 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text.Json;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Aspire defaults
+// 1. Aspire & Services de base
 builder.AddServiceDefaults();
-
-// Blazor Server
+builder.Services.AddMudServices();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Antiforgery
 builder.Services.AddAntiforgery();
-
-// HttpContextAccessor pour le TokenHandler
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddCascadingAuthenticationState();
 
-// Handler qui ajoute l'access_token aux appels API
+// 2. Ton TokenHandler (Pour l'Auth API)
 builder.Services.AddTransient<LoLProject.WebApp.Clients.TokenHandler>();
 
-// HttpClient typé vers l’API (via Aspire)
-builder.Services.AddHttpClient<ITodoClient, TodoClient>((sp, client) =>
+// 3. Configuration des Clients HTTP (CORRECTION ICI)
+// On crée un handler qui ignore les erreurs SSL (Juste pour le Dev)
+// Création d'un Handler qui s'en fiche des erreurs SSL (Self-Signed)
+var unsafeHandler = new HttpClientHandler();
+unsafeHandler.ServerCertificateCustomValidationCallback = 
+    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+
+// Client TODO
+builder.Services.AddHttpClient<ITodoClient, TodoClient>(client =>
     {
-        var cfg = sp.GetRequiredService<IConfiguration>();
-        var httpUrl = cfg["services:apiservice:http:0"];
-        client.BaseAddress = new Uri(httpUrl ?? "http://apiservice");
+        // On remet "https+http", Aspire choisira le meilleur port dispo
+        client.BaseAddress = new("https+http://apiservice");
     })
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-    {
-        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-    })
+    .ConfigurePrimaryHttpMessageHandler(() => unsafeHandler) // Important !
     .AddHttpMessageHandler<LoLProject.WebApp.Clients.TokenHandler>();
 
-// HttpClient nommé "api" si besoin
-builder.Services.AddHttpClient("api", (sp, c) =>
-{
-    var cfg = sp.GetRequiredService<IConfiguration>();
-    c.BaseAddress = new Uri(cfg["services:apiservice:http:0"]!);
-});
+// Client SUMMONER
+builder.Services.AddHttpClient<SummonerClient>(client =>
+    {
+        client.BaseAddress = new("https+http://apiservice");
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => unsafeHandler) // Important !
+    .AddHttpMessageHandler<LoLProject.WebApp.Clients.TokenHandler>();
 
-// 🔐 Authentification + OIDC
+// 4. Authentification OIDC (Keycloak)
 builder.Services
     .AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = "oidc";
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
     })
-    // Cookie : gestion de l'accès refusé
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
-        // Pas de redirection vers /Account/AccessDenied (n'existe pas) → on renvoie juste 403
         options.Events.OnRedirectToAccessDenied = ctx =>
         {
             ctx.Response.StatusCode = 403;
             return Task.CompletedTask;
         };
     })
-    .AddOpenIdConnect("oidc", options =>
+    .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
     {
+        // Configuration
         options.Authority = builder.Configuration["Authentication:OIDC:Authority"];
         options.ClientId = builder.Configuration["Authentication:OIDC:ClientId"];
         options.ClientSecret = builder.Configuration["Authentication:OIDC:ClientSecret"];
-        options.RequireHttpsMetadata = false;
+        
+        // Paramètres Dev
+        options.RequireHttpsMetadata = false; 
         options.ResponseType = "code";
         options.SaveTokens = true;
         options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.CallbackPath = "/signin-oidc";
         options.SignedOutCallbackPath = "/signout-callback-oidc";
-        options.UseTokenLifetime = true;
+        
+        // Mapping des claims
         options.MapInboundClaims = false;
+        options.TokenValidationParameters.NameClaimType = "name";
+        options.TokenValidationParameters.RoleClaimType = "role";
 
-        // Désactiver PAR si Keycloak ne l’aime pas
         options.Events.OnRedirectToIdentityProvider = context =>
         {
+            // Correctif pour Docker/Keycloak (évite les erreurs de loop http/https)
             context.ProtocolMessage.SetParameter("request_uri", null);
-            context.ProtocolMessage.SetParameter("request", null);
             return Task.CompletedTask;
         };
 
-        // On veut un access_token pour l’API
-        options.Scope.Add("api");
-
-        // On indique que :
-        // - le nom vient du claim "name"
-        // - les rôles utiliseront ClaimTypes.Role (standard .NET)
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            NameClaimType = "name",
-            RoleClaimType = ClaimTypes.Role,
-        };
-
-        // Mapper realm_access.roles -> claims "role" standards
+        // Extraction des Rôles Keycloak
         options.Events.OnTokenValidated = context =>
         {
-            if (context.Principal?.Identity is ClaimsIdentity identity)
+            var principal = context.Principal;
+            if (principal?.Identity is ClaimsIdentity identity)
             {
-                var realmAccess = identity.FindFirst("realm_access");
-                if (realmAccess is not null && !string.IsNullOrEmpty(realmAccess.Value))
+                // Mapping realm_access.roles -> claim "role"
+                var realmAccess = principal.FindFirst("realm_access");
+                if (realmAccess != null)
                 {
                     try
                     {
                         using var doc = JsonDocument.Parse(realmAccess.Value);
-                        if (doc.RootElement.TryGetProperty("roles", out var rolesElement)
-                            && rolesElement.ValueKind == JsonValueKind.Array)
+                        if (doc.RootElement.TryGetProperty("roles", out var rolesElement))
                         {
-                            foreach (var roleJson in rolesElement.EnumerateArray())
+                            foreach (var role in rolesElement.EnumerateArray())
                             {
-                                var roleName = roleJson.GetString();
-                                if (!string.IsNullOrWhiteSpace(roleName))
-                                {
-                                    // 👉 Ici on crée un claim de type ClaimTypes.Role
-                                    identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
-                                }
+                                identity.AddClaim(new Claim("role", role.GetString() ?? ""));
                             }
                         }
                     }
-                    catch
-                    {
-                        // si jamais le JSON est chelou, on ignore
-                    }
+                    catch { }
+                }
+                
+                // Mapping resource_access (si besoin)
+                var resourceAccess = principal.FindFirst("resource_access");
+                 if (resourceAccess != null)
+                {
+                     // Logique similaire si tes rôles sont au niveau client
                 }
             }
-
             return Task.CompletedTask;
         };
-
-        // Debug des erreurs OIDC si besoin
-        options.Events.OnRemoteFailure = context =>
-        {
-            context.HandleResponse();
-            context.Response.StatusCode = 500;
-            return context.Response.WriteAsync(context.Failure?.ToString() ?? "Unknown OIDC error");
-        };
-
-        options.ClaimActions.MapAll();
     });
 
-builder.Services.AddAuthorization();
-
-// Pour <AuthorizeView> et [Authorize]
-builder.Services.AddCascadingAuthenticationState();
-
-// Refresh token + cookies
-builder.Services.ConfigureCookieOidc(
-    CookieAuthenticationDefaults.AuthenticationScheme,
-    "oidc");
+// Configuration cookie refresh (si tu as la classe)
+// builder.Services.ConfigureCookieOidc(CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme);
 
 var app = builder.Build();
 
@@ -163,34 +138,27 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // <-- COMMENTE CETTE LIGNE (Évite de forcer HTTPS en local si ça bug)
 app.UseStaticFiles();
-
-// Antiforgery
 app.UseAntiforgery();
 
-// Auth / Authorize
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Endpoint login
 app.MapGet("/authentication/login", async (HttpContext context, string? returnUrl) =>
 {
-    var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
-
-    await context.ChallengeAsync("oidc", new AuthenticationProperties
+    await context.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties
     {
-        RedirectUri = redirectUri
+        RedirectUri = returnUrl ?? "/"
     });
 });
 
-// Endpoint logout
 app.MapGet("/authentication/logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    await context.SignOutAsync("oidc", new AuthenticationProperties
+    await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, new AuthenticationProperties
     {
-        RedirectUri = "/",
+        RedirectUri = "/"
     });
 });
 

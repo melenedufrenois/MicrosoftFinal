@@ -1,0 +1,46 @@
+@page "/claims"
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>Claims Debug</PageTitle>
+
+<h3>Mes Revendications OIDC (Debug)</h3>
+
+<AuthorizeView>
+    <Authorized>
+        <p><strong>Authentifié en tant que :</strong> @context.User.Identity?.Name</p>
+        
+        <table class="table table-striped table-bordered">
+            <thead class="thead-dark">
+            <tr>
+                <th>Type de Claim</th>
+                <th>Valeur</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var claim in context.User.Claims.OrderBy(c => c.Type))
+            {
+                <tr>
+                    <td><strong>@claim.Type</strong></td>
+                    <td>@claim.Value</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+        
+        <form action="Account/Logout" method="post">
+            <button type="submit" class="btn btn-danger">
+                <span class="oi oi-account-logout" aria-hidden="true"></span> Déconnexion
+            </button>
+        </form>
+
+    </Authorized>
+    <NotAuthorized>
+        <div class="alert alert-warning">
+            Veuillez vous connecter pour voir vos revendications.
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    // Aucune logique C# n'est nécessaire ici, tout est géré par <AuthorizeView> et @context.
+}

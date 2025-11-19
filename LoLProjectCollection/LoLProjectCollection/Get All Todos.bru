@@ -7,9 +7,31 @@ meta {
 get {
   url: http://localhost:5284/api/todo
   body: none
-  auth: inherit
+  auth: oauth2
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJ0dHRTeUFsc29oN3VVemZZNXRNLVM4RmZPV1k2R1RkYUtwU3RZbU1FYnl3In0.eyJleHAiOjE3NjM1NDQ2NDEsImlhdCI6MTc2MzU0NDM0MSwianRpIjoidHJydGNjOjRjOWE5OTc3LThlMjYtMmQ5Ni01NGRhLTA2YWM5NWU5YjU1NCIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA5MC9yZWFsbXMvTG9MUHJvamVjdCIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiIzN2M5OWU1NS1iMzM4LTQ0ZjItOTRiZi00NDNlY2Y4M2UyZTEiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJhcGktdGVzdCIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiLyoiXSwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbIm9mZmxpbmVfYWNjZXNzIiwiZGVmYXVsdC1yb2xlcy1sb2xwcm9qZWN0IiwidW1hX2F1dGhvcml6YXRpb24iXX0sInJlc291cmNlX2FjY2VzcyI6eyJhcGktdGVzdCI6eyJyb2xlcyI6WyJ1bWFfcHJvdGVjdGlvbiJdfSwiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJlbWFpbCBwcm9maWxlIiwiY2xpZW50SG9zdCI6IjE3Mi4xOC4wLjEiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZlcnJlZF91c2VybmFtZSI6InNlcnZpY2UtYWNjb3VudC1hcGktdGVzdCIsImNsaWVudEFkZHJlc3MiOiIxNzIuMTguMC4xIiwiY2xpZW50X2lkIjoiYXBpLXRlc3QifQ.nxDG5aom2TPiS4yjRrnKrBwEBzaNiuy1RlgOZnc4TYb5IxQPnhyCMJe5xcHr0v03Ug8eJ8vAzf89LSQ0H9sihkzsTyk5V6momEzbc5N3SFxIiA-kfmmiLhlTHEmPhGEGxmc-xvl5abXdfYSD1UwXohbNTkUGo-tzleXndb94THyGtRDoLlk-DUxHdbabdd6LCfk2WXjaYx-YL6ucmGrVpB_JHgKQyqgGcddd5_J18B7MYIDcPdltg7iZAHn4D8Zo-l2xp5VRD1hYmHhKYyvZjZ4E2r_yrAru-PuigPT8LJL6AIykCyBBgkZhQ5bBWZDZsYumGrZpVWnpExzj8WZv7Q
+}
+
+auth:oauth2 {
+  grant_type: password
+  access_token_url: http://localhost:8090/realms/LoLProject/protocol/openid-connect/token
+  refresh_token_url: 
+  username: test
+  password: test
+  client_id: api-test
+  client_secret: RD9QCLN5gh3pz9Hd7hBmln3xmTQtw3D1
+  scope: openid profile api
+  credentials_placement: body
+  credentials_id: credentials
+  token_placement: header
+  token_header_prefix: Bearer
+  auto_fetch_token: true
+  auto_refresh_token: false
 }
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

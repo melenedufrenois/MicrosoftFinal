@@ -1,0 +1,40 @@
+@page "/dashboard"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using LoLProject.WebApp.Clients
+@using MudBlazor
+@inject SummonerClient SummonerService
+@inject NavigationManager Nav
+
+<MudText Typo="Typo.h4">Mes Favoris</MudText>
+
+<!-- CORRECTION ICI : On utilise une lambda pour OnRowClick -->
+<MudTable T="SummonerClient.SearchResult" Items="@favorites" Hover="true" OnRowClick="@(args => RowClickEvent(args))">
+    <HeaderContent>
+        <MudTh>Nom</MudTh>
+        <MudTh>Tag</MudTh>
+        <MudTh>Niveau</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Nom">@context.GameName</MudTd>
+        <MudTd DataLabel="Tag">@context.TagLine</MudTd>
+        <MudTd DataLabel="Niveau">@context.Level</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    List<SummonerClient.SearchResult> favorites = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        favorites = await SummonerService.GetFavoritesAsync();
+    }
+
+    void RowClickEvent(TableRowClickEventArgs<SummonerClient.SearchResult> args)
+    {
+        // CORRECTION ICI : Ajout du ! pour dire au compilo "t'inquiète c'est pas null"
+        if (args.Item != null)
+        {
+            Nav.NavigateTo($"/details/{args.Item.Puuid}");
+        }
+    }
+}

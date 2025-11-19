@@ -1,71 +1,83 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+﻿@inherits LayoutComponentBase
+@using MudBlazor
+@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
-@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3">Nexus Watcher</MudText>
+        <MudSpacer />
+
+        <AuthorizeView>
+            <Authorized Context="auth">
+                @{
+                    var user = auth.User;
+                    var name = user.Identity?.Name ?? "Invocateur";
+                    var roles = user.Claims
+                        .Where(c => c.Type == "roles" || c.Type == "role") // Gère les deux cas
+                        .Select(c => c.Value)
+                        .Distinct()
+                        .ToList();
+                }
+
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudText Typo="Typo.body2"><b>@name</b></MudText>
+                    @if (roles.Any())
+                    {
+                        <MudChip T="string" Size="Size.Small" Color="Color.Secondary">
+                            @string.Join(", ", roles)
+                        </MudChip>
+                    }
+                    <!-- BOUTON DECONNEXION (Méthode Robuste via Href) -->
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Inherit" 
+                               Size="Size.Small" 
+                               Href="authentication/logout"
+                               Target="_top">
+                        Déconnexion
+                    </MudButton>
+                </MudStack>
+            </Authorized>
+            <NotAuthorized>
+                <!-- BOUTON CONNEXION (Méthode Robuste via Href) -->
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Secondary" 
+                           Href="@GetLoginUrl()"
+                           Target="_top">
+                    Connexion
+                </MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
-    </div>
+    </MudDrawer>
 
-    <main>
-        <div class="top-row px-4 d-flex align-items-center">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-
-            <div class="ms-auto d-flex align-items-center">
-                <AuthorizeView>
-                    <Authorized Context="auth">
-                        @{
-                            var user = auth.User;
-                            var name = user.Identity?.Name ?? "Utilisateur";
-                            var roles = user.Claims
-                                .Where(c => c.Type == "roles")
-                                .Select(c => c.Value)
-                                .ToList();
-                        }
-
-                        <div class="me-3 text-end">
-                            <div>@name</div>
-                            @if (roles.Any())
-                            {
-                                <small>Rôles : @string.Join(", ", roles)</small>
-                            }
-                        </div>
-
-                        <button class="btn btn-outline-primary btn-sm" @onclick="Logout">
-                            Se déconnecter
-                        </button>
-                    </Authorized>
-
-                    <NotAuthorized>
-                        <button class="btn btn-outline-primary btn-sm" @onclick="Login">
-                            Se connecter
-                        </button>
-                    </NotAuthorized>
-                </AuthorizeView>
-            </div>
-        </div>
-
-        <article class="content px-4">
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
             @Body
-        </article>
-    </main>
-</div>
-
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
 
 @code {
-    private void Login()
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
     {
-        var returnUrl = Uri.EscapeDataString(Navigation.Uri);
-        Navigation.NavigateTo($"authentication/login?returnUrl={returnUrl}", forceLoad: true);
+        _drawerOpen = !_drawerOpen;
     }
 
-    private void Logout()
+    // On génère l'URL dynamiquement
+    private string GetLoginUrl()
     {
-        Navigation.NavigateTo("/authentication/logout", forceLoad: true);
+        var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+        return $"authentication/login?returnUrl={returnUrl}";
     }
 }

@@ -1,9 +1,59 @@
-@rendermode InteractiveServer
+﻿@page "/"
+@using LoLProject.WebApp.Clients
+@inject SummonerClient SummonerService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
 
-@page "/"
+<MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true">Recherche d'Invocateur</MudText>
 
-<h3>Home</h3>
+<MudGrid Justify="Justify.Center">
+    <MudItem xs="12" sm="6">
+        <MudPaper Class="pa-4">
+            <MudTextField @bind-Value="searchName" Label="Nom (ex: Hide on bush)" />
+            <MudTextField @bind-Value="searchTag" Label="Tag (ex: KR1)" />
+            <MudButton OnClick="Search" Variant="Variant.Filled" Color="Color.Primary" Class="mt-2">Rechercher</MudButton>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
 
-<p class="mb-3">
-    Selem Mélène & Mehdi
-</p>
+@if (result != null)
+{
+    <MudCard Class="mt-4">
+        <MudCardContent>
+            <MudText Typo="Typo.h5">@result.GameName #@result.TagLine</MudText>
+            <MudText>Niveau : @result.Level</MudText>
+            <MudImage Src="@($"https://ddragon.leagueoflegends.com/cdn/14.22.1/img/profileicon/{result.IconId}.png")" Width="64" Height="64"/>
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton OnClick="Follow" Disabled="@result.IsFollowed" Variant="Variant.Filled" Color="Color.Secondary">
+                @(result.IsFollowed ? "Déjà suivi" : "Suivre")
+            </MudButton>
+        </MudCardActions>
+    </MudCard>
+}
+
+@code {
+    string searchName = "";
+    string searchTag = "";
+    SummonerClient.SearchResult? result;
+
+    async Task Search()
+    {
+        result = await SummonerService.SearchAsync(searchName, searchTag);
+        if(result == null) Snackbar.Add("Introuvable", Severity.Error);
+    }
+
+    async Task Follow()
+    {
+        try 
+        {
+            await SummonerService.FollowAsync(new SummonerClient.FollowRequest(result!.Puuid, result.GameName, result.TagLine, result.IconId, result.Level));
+            Snackbar.Add("Suivi ajouté !", Severity.Success);
+            result = result with { IsFollowed = true };
+        }
+        catch
+        {
+            Snackbar.Add("Erreur (Es-tu connecté ?)", Severity.Error);
+        }
+    }
+}
