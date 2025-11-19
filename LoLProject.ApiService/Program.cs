@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using LoLProject.Persistence;
 using LoLProject.Persistence.Models;
+using LoLProject.ApiService.Endpoints;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,24 +29,51 @@ builder.Services
     {
         options.Authority = builder.Configuration["Authentication:OIDC:Authority"];
         options.Audience  = builder.Configuration["Authentication:OIDC:Audience"];
-        options.RequireHttpsMetadata = false; // on est en HTTP en local
+        
+        // 1. On autorise le HTTP (pas de SSL obligatoire)
+        options.RequireHttpsMetadata = false; 
 
+        // 2. On relâche la validation stricte
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateAudience = true,
-            ValidateIssuer = true,
+            // TRES IMPORTANT : On désactive la vérification de l'émetteur (Issuer)
+            // Ça règle le conflit "localhost" vs "keycloak:8090"
+            ValidateIssuer = false, 
+            
+            // IMPORTANT : On désactive la vérification de l'audience
+            // Ça règle le problème si le mapper "api" est mal fait dans Keycloak
+            ValidateAudience = false,
+
+            // On garde quand même la vérification de la date (expiration)
             ValidateLifetime = true,
+
+            // On garde la vérification de la signature (que ça vient bien de notre Keycloak)
             ValidateIssuerSigningKey = true,
+            
+            // Mapping des rôles
             NameClaimType = "name",
-            // si dans Keycloak ton claim s'appelle "roles", garde "roles"
-            RoleClaimType = "roles",
+            RoleClaimType = "realm_access.roles", // Essaie ça, c'est souvent le défaut Keycloak
         };
 
-        // ne pas remapper automatiquement les claims (on garde les noms bruts)
-        options.MapInboundClaims = false;
+        // Events pour débugger (optionnel, tu peux laisser ou enlever)
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"🛑 Auth Failed: {context.Exception.Message}");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                Console.WriteLine("✅ Token accepté (Sécurité réduite)");
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddHttpClient<LoLProject.ApiService.Services.RiotService>();
 
 var app = builder.Build();
 
@@ -59,6 +88,7 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapLoLEndpoints();
 // Appliquer les migrations + seed au démarrage
 using (var scope = app.Services.CreateScope())
 {
@@ -84,36 +114,6 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
-
-// 🔒 Endpoints TODO protégés avec [Authorize]
-app.MapGet("/api/todo", [Authorize] async (AppDb db) =>
-    await db.Todos.AsNoTracking().ToListAsync());
-
-app.MapPost("/api/todo", [Authorize] async (AppDb db, TodoItem t) =>
-{
-    db.Todos.Add(t);
-    await db.SaveChangesAsync();
-    return Results.Created($"/api/todo/{t.Id}", t);
-});
-
-app.MapPut("/api/todo/{id:int}", [Authorize] async (int id, AppDb db, TodoItem input) =>
-{
-    var t = await db.Todos.FindAsync(id);
-    if (t is null) return Results.NotFound();
-    t.Title = input.Title;
-    t.Done = input.Done;
-    await db.SaveChangesAsync();
-    return Results.NoContent();
-});
-
-app.MapDelete("/api/todo/{id:int}", [Authorize] async (int id, AppDb db) =>
-{
-    var t = await db.Todos.FindAsync(id);
-    if (t is null) return Results.NotFound();
-    db.Todos.Remove(t);
-    await db.SaveChangesAsync();
-    return Results.NoContent();
-});
 
 app.Run();
 

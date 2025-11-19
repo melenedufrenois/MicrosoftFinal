@@ -1,0 +1,63 @@
+@page "/champions"
+@using LoLProject.WebApp.Clients
+@inject LoLClient LoLClient
+
+<PageTitle>Wiki Champions</PageTitle>
+
+<div class="container">
+    <h1 class="mb-4 text-center text-primary">Wiki des Champions</h1>
+
+    @if (champions == null)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+            <p class="mt-2">Invocation des champions en cours...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
+            @foreach (var champ in champions)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0 hover-effect">
+                        <img src="@champ.IconUrl" class="card-img-top" alt="@champ.Name" 
+                             style="max-height: 150px; object-fit: contain; background-color: #000; padding: 10px;">
+                        
+                        <div class="card-body text-center">
+                            <h5 class="card-title fw-bold">@champ.Name</h5>
+                            <p class="card-text text-muted small fst-italic">@champ.Title</p>
+                            <a href="champions/@champ.Id" class="btn btn-primary btn-sm w-100 mt-2">
+                                <i class="bi bi-lightbulb"></i> Tips & Astuces
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .hover-effect {
+        transition: transform 0.2s;
+    }
+    .hover-effect:hover {
+        transform: translateY(-5px);
+    }
+</style>
+
+@code {
+    private List<ChampionDto>? champions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // On appelle l'API au chargement de la page
+        champions = await LoLClient.GetChampionsAsync();
+        
+        // Tri par ordre alphabétique pour faire propre
+        champions = champions.OrderBy(c => c.Name).ToList();
+    }
+}

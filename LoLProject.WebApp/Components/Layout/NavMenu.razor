@@ -1,25 +1,41 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">LoLProject.WebApp</a>
+        <a class="navbar-brand" href="">LoLProject</a>
     </div>
 </div>
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
+    <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Accueil
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="champions">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Champions
             </NavLink>
         </div>
 
         <AuthorizeView>
             <Authorized>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="/todos">
-                        <span class="oi oi-list-rich" aria-hidden="true"></span> Todos
+                    <NavLink class="nav-link" href="dashboard">
+                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> Mon Dashboard
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="admin">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin">
+                        <span class="bi bi-lock-fill-nav-menu" aria-hidden="true"></span> Admin
                     </NavLink>
                 </div>
             </Authorized>

@@ -1,0 +1,29 @@
+@page "/admin"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "admin")]
+
+<PageTitle>Administration</PageTitle>
+
+<div class="bg-danger text-white p-3 rounded mb-3">
+    <h1>Zone Administrateur</h1>
+    <p>Accès réservé aux gestionnaires de l'application.</p>
+</div>
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Action</th>
+        <th>Status</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>API Riot Status</td>
+        <td><span class="badge bg-success">En ligne</span></td>
+    </tr>
+    <tr>
+        <td>Base de données</td>
+        <td><span class="badge bg-success">Connectée</span></td>
+    </tr>
+    </tbody>
+</table>

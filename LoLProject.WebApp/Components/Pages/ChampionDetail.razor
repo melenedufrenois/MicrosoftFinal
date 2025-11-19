@@ -1,0 +1,112 @@
+@page "/champions/{Id:int}"
+@using LoLProject.WebApp.Clients
+@using Microsoft.AspNetCore.Authorization
+@inject LoLClient LoLClient
+@inject NavigationManager Nav
+
+<PageTitle>@(champion?.Name ?? "Détails") - Tips</PageTitle>
+
+<div class="container mt-4">
+    @if (champion == null)
+    {
+        <div class="text-center"><div class="spinner-border"></div></div>
+    }
+    else
+    {
+        <div class="card mb-4 border-0 shadow">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    <img src="@champion.ImageUrl" class="img-fluid rounded-start w-100" alt="@champion.Name" style="min-height: 300px; object-fit: cover;">
+                </div>
+                <div class="col-md-8">
+                    <div class="card-body h-100 d-flex flex-column justify-content-center">
+                        <h1 class="display-4 fw-bold">@champion.Name</h1>
+                        <h3 class="text-muted fst-italic">@champion.Title</h3>
+                        <p class="card-text mt-3 lead">@champion.Description</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2><i class="bi bi-lightbulb-fill text-warning"></i> Tips de la communauté</h2>
+                </div>
+
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="card mb-4 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">Partager votre savoir</h5>
+                                <textarea @bind="newTipContent" @bind:event="oninput" class="form-control mb-2" rows="2" placeholder="Une astuce contre ce champion ?"></textarea>                                <button class="btn btn-success" @onclick="PostTip" disabled="@string.IsNullOrWhiteSpace(newTipContent)">
+                                    Publier mon Tip
+                                </button>
+                            </div>
+                        </div>
+                    </Authorized>
+                    <NotAuthorized>
+                        <div class="alert alert-info">
+                            <a href="authentication/login">Connectez-vous</a> pour ajouter un tip !
+                        </div>
+                    </NotAuthorized>
+                </AuthorizeView>
+
+                @if (champion.Tips.Any())
+                {
+                    <div class="list-group">
+                        @foreach (var tip in champion.Tips.OrderByDescending(t => t.CreatedAt))
+                        {
+                            <div class="list-group-item list-group-item-action flex-column align-items-start">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1 fw-bold text-primary">@tip.Author.Username</h6>
+                                    <small class="text-muted">@tip.CreatedAt.ToLocalTime().ToString("g")</small>
+                                </div>
+                                <p class="mb-1">@tip.Content</p>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center p-5">Aucun tip pour le moment. Soyez le premier !</p>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private ChampionDetailDto? champion;
+    private string newTipContent = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        champion = await LoLClient.GetChampionDetailAsync(Id);
+    }
+
+    private async Task PostTip()
+    {
+        if (string.IsNullOrWhiteSpace(newTipContent)) return;
+
+        // On récupère le résultat (Vrai ou Faux)
+        bool success = await LoLClient.AddTipAsync(Id, newTipContent);
+
+        if (success)
+        {
+            newTipContent = ""; // On vide seulement si ça a marché
+            await LoadData();   // On recharge la liste
+        }
+        else
+        {
+            // Optionnel : Afficher une alerte (nécessite du JS ou un flag d'erreur)
+            Console.WriteLine("Erreur lors de l'envoi du tip.");
+        }
+    }
+}

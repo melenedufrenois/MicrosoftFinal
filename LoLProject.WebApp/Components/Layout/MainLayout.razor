@@ -1,6 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
 @inherits LayoutComponentBase
+@using LoLProject.WebApp.Clients 
+@inject AuthenticationStateProvider AuthStateProvider
+@inject LoLClient LoLClient
 
 <div class="page">
     <div class="sidebar">
@@ -58,6 +61,20 @@
 </div>
 
 @code {
+    
+    protected override async Task OnInitializedAsync()
+    {
+        // On récupère l'état d'authentification actuel
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // Si l'utilisateur est connecté (Keycloak), on assure qu'il est en BDD locale
+        if (user.Identity is { IsAuthenticated: true })
+        {
+            await LoLClient.SyncUserAsync();
+        }
+    }
+
     private void Login()
     {
         var returnUrl = Uri.EscapeDataString(Navigation.Uri);

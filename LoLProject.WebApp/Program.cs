@@ -28,20 +28,24 @@ builder.Services.AddHttpContextAccessor();
 // Handler qui ajoute l'access_token aux appels API
 builder.Services.AddTransient<LoLProject.WebApp.Clients.TokenHandler>();
 
-// HttpClient typé vers l’API (via Aspire)
-builder.Services.AddHttpClient<ITodoClient, TodoClient>((sp, client) =>
-    {
-        var cfg = sp.GetRequiredService<IConfiguration>();
-        var httpUrl = cfg["services:apiservice:http:0"];
-        client.BaseAddress = new Uri(httpUrl ?? "http://apiservice");
-    })
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-    {
-        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-    })
-    .AddHttpMessageHandler<LoLProject.WebApp.Clients.TokenHandler>();
+// 1. Configuration du LoLClient (CORRIGÉ)
+builder.Services.AddHttpClient<LoLProject.WebApp.Clients.LoLClient>(client =>
+{
+    // Récupération propre de l'URL via la configuration Aspire
+    var cfg = builder.Configuration;
+    var httpUrl = cfg["services:apiservice:http:0"];
+    client.BaseAddress = new Uri(httpUrl ?? "http://apiservice");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    // Nécessaire pour Docker/Dev
+    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+})
+// 👇 C'EST LA LIGNE QU'IL VOUS MANQUAIT 👇
+.AddHttpMessageHandler<LoLProject.WebApp.Clients.TokenHandler>();
 
-// HttpClient nommé "api" si besoin
+
+// HttpClient nommé "api" si besoin (TodoClient etc)
 builder.Services.AddHttpClient("api", (sp, c) =>
 {
     var cfg = sp.GetRequiredService<IConfiguration>();
@@ -58,7 +62,6 @@ builder.Services
     // Cookie : gestion de l'accès refusé
     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
-        // Pas de redirection vers /Account/AccessDenied (n'existe pas) → on renvoie juste 403
         options.Events.OnRedirectToAccessDenied = ctx =>
         {
             ctx.Response.StatusCode = 403;
@@ -89,10 +92,9 @@ builder.Services
 
         // On veut un access_token pour l’API
         options.Scope.Add("api");
+        options.Scope.Add("openid");
+        options.Scope.Add("profile");
 
-        // On indique que :
-        // - le nom vient du claim "name"
-        // - les rôles utiliseront ClaimTypes.Role (standard .NET)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             NameClaimType = "name",
@@ -102,47 +104,56 @@ builder.Services
         // Mapper realm_access.roles -> claims "role" standards
         options.Events.OnTokenValidated = context =>
         {
-            if (context.Principal?.Identity is ClaimsIdentity identity)
+            // 💡 CORRECTION CRITIQUE POUR BLAZOR
+            // On ne modifie pas l'identité en place, on en recrée une propre pour le Cookie
+            var principal = context.Principal;
+            if (principal == null) return Task.CompletedTask;
+
+            // Création explicite de l'identité cookie
+            var newIdentity = new ClaimsIdentity(
+                CookieAuthenticationDefaults.AuthenticationScheme, 
+                ClaimTypes.Name, 
+                ClaimTypes.Role);
+
+            // On copie toutes les infos existantes (sub, name, etc.)
+            newIdentity.AddClaims(principal.Claims);
+
+            // On cherche les rôles Keycloak
+            var realmAccess = principal.FindFirst("realm_access");
+            if (realmAccess is not null && !string.IsNullOrEmpty(realmAccess.Value))
             {
-                var realmAccess = identity.FindFirst("realm_access");
-                if (realmAccess is not null && !string.IsNullOrEmpty(realmAccess.Value))
+                try
                 {
-                    try
+                    using var doc = JsonDocument.Parse(realmAccess.Value);
+                    if (doc.RootElement.TryGetProperty("roles", out var rolesElement)
+                        && rolesElement.ValueKind == JsonValueKind.Array)
                     {
-                        using var doc = JsonDocument.Parse(realmAccess.Value);
-                        if (doc.RootElement.TryGetProperty("roles", out var rolesElement)
-                            && rolesElement.ValueKind == JsonValueKind.Array)
+                        foreach (var roleJson in rolesElement.EnumerateArray())
                         {
-                            foreach (var roleJson in rolesElement.EnumerateArray())
+                            var roleName = roleJson.GetString();
+                            if (!string.IsNullOrWhiteSpace(roleName))
                             {
-                                var roleName = roleJson.GetString();
-                                if (!string.IsNullOrWhiteSpace(roleName))
-                                {
-                                    // 👉 Ici on crée un claim de type ClaimTypes.Role
-                                    identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
-                                }
+                                // Ajout du rôle standard que Blazor comprend
+                                newIdentity.AddClaim(new Claim(ClaimTypes.Role, roleName));
                             }
                         }
                     }
-                    catch
-                    {
-                        // si jamais le JSON est chelou, on ignore
-                    }
                 }
+                catch { /* ignore */ }
             }
+
+            // On remplace le Principal par notre version propre et complète
+            context.Principal = new ClaimsPrincipal(newIdentity);
 
             return Task.CompletedTask;
         };
 
-        // Debug des erreurs OIDC si besoin
         options.Events.OnRemoteFailure = context =>
         {
             context.HandleResponse();
             context.Response.StatusCode = 500;
             return context.Response.WriteAsync(context.Failure?.ToString() ?? "Unknown OIDC error");
         };
-
-        options.ClaimActions.MapAll();
     });
 
 builder.Services.AddAuthorization();
@@ -177,21 +188,14 @@ app.UseAuthorization();
 app.MapGet("/authentication/login", async (HttpContext context, string? returnUrl) =>
 {
     var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
-
-    await context.ChallengeAsync("oidc", new AuthenticationProperties
-    {
-        RedirectUri = redirectUri
-    });
+    await context.ChallengeAsync("oidc", new AuthenticationProperties { RedirectUri = redirectUri });
 });
 
 // Endpoint logout
 app.MapGet("/authentication/logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    await context.SignOutAsync("oidc", new AuthenticationProperties
-    {
-        RedirectUri = "/",
-    });
+    await context.SignOutAsync("oidc", new AuthenticationProperties { RedirectUri = "/", });
 });
 
 app.MapRazorComponents<App>()

@@ -1,0 +1,119 @@
+@page "/dashboard"
+@using LoLProject.WebApp.Clients
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject LoLClient LoLClient
+
+<PageTitle>Mon Dashboard</PageTitle>
+
+<div class="container mt-4">
+    @if (isLoading)
+    {
+        <div class="text-center"><div class="spinner-border"></div></div>
+    }
+    else if (dashboardData?.Summoner == null)
+    {
+        <div class="card text-center p-5 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title mb-4">Lier votre compte League of Legends</h2>
+                <p class="text-muted">Entrez votre Riot ID pour accéder à vos statistiques.</p>
+                
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="input-group mb-3">
+                            <input type="text" @bind="gameName" class="form-control" placeholder="GameName (ex: Faker)">
+                            <span class="input-group-text">#</span>
+                            <input type="text" @bind="tagLine" class="form-control" placeholder="Tag (ex: EUW)" style="max-width: 100px;">
+                            <button class="btn btn-primary" @onclick="LinkAccount" disabled="@isLinking">
+                                @(isLinking ? "Recherche..." : "Lier")
+                            </button>
+                        </div>
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger">@errorMessage</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        var sum = dashboardData.Summoner;
+        <div class="card border-0 shadow mb-4">
+            <div class="card-body d-flex align-items-center">
+                <div class="position-relative">
+                    <img src="@($"https://ddragon.leagueoflegends.com/cdn/14.22.1/img/profileicon/{sum.ProfileIconId}.png")" 
+                         class="rounded-circle border border-4 border-primary" width="100" alt="Icon">
+                    <span class="position-absolute bottom-0 start-50 translate-middle-x badge rounded-pill bg-dark">
+                        Lvl @sum.SummonerLevel
+                    </span>
+                </div>
+                <div class="ms-4">
+                    <h1 class="mb-0">@sum.GameName <span class="text-muted h4">#@sum.TagLine</span></h1>
+                    <p class="text-muted">Invocateur lié</p>
+                </div>
+                 <button class="btn btn-outline-secondary ms-auto" @onclick="UnlinkAccount">
+                    <i class="bi bi-arrow-repeat"></i> Mettre à jour / Changer
+                </button>
+            </div>
+        </div>
+        
+        <div class="alert alert-info">
+            Les statistiques détaillées arrivent bientôt !
+        </div>
+    }
+</div>
+
+@code {
+    private AppUserDto? dashboardData;
+    private bool isLoading = true;
+    private bool isLinking = false;
+    private string gameName = "";
+    private string tagLine = "";
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        dashboardData = await LoLClient.GetMyDashboardAsync();
+        isLoading = false;
+    }
+
+    private async Task LinkAccount()
+    {
+        isLinking = true;
+        errorMessage = "";
+        
+        if (string.IsNullOrWhiteSpace(gameName) || string.IsNullOrWhiteSpace(tagLine))
+        {
+            errorMessage = "Veuillez remplir les deux champs.";
+            isLinking = false;
+            return;
+        }
+
+        bool success = await LoLClient.LinkSummonerAsync(gameName, tagLine);
+        
+        if (success)
+        {
+            await LoadData(); // Recharger pour afficher le dashboard
+        }
+        else
+        {
+            errorMessage = "Invocateur introuvable ou erreur API.";
+        }
+        isLinking = false;
+    }
+    
+    private void UnlinkAccount()
+    {
+        // Pour l'instant, on vide juste l'objet local pour réafficher le formulaire
+        // Idéalement, il faudrait une confirmation ou un vrai unlink en BDD
+        if(dashboardData != null) dashboardData.Summoner = null;
+    }
+}
