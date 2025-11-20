@@ -1,0 +1,54 @@
+﻿services:
+
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: lol_sql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong_Password123!"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong_Password123! -Q \"SELECT 1\"" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+  
+  lol_api:
+    container_name: lol_api
+    build:
+      context: .
+      dockerfile: LoLProject.ApiService/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__lolproject: "Server=lol_sql;Database=lolproject;User Id=sa;Password=YourStrong_Password123!;TrustServerCertificate=True;"
+    ports:
+      - "5284:8080"
+    depends_on:
+      sql:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  
+  lol_webapp:
+    container_name: lol_webapp
+    build:
+      context: .
+      dockerfile: LoLProject.WebApp/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      services__apiservice__http__0: "http://lol_api:8080"
+    ports:
+      - "7209:8080"
+    depends_on:
+      lol_api:
+        condition: service_healthy
+
+volumes:
+  sql_data:

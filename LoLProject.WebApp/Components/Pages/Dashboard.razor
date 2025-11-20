@@ -1,0 +1,270 @@
+@page "/dashboard"
+@using LoLProject.WebApp.Clients
+@using LoLProject.WebApp.DTOs
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject LoLClient LoLClient
+
+<PageTitle>Mon Dashboard - Invocateur</PageTitle>
+
+<style>
+    .hextech-container {
+        border: 1px solid #463714;
+        background: linear-gradient(135deg, #091428 0%, #0a323c 100%);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        color: #f0e6d2;
+    }
+
+    .profile-header {
+        border-bottom: 2px solid #c8aa6e;
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .summoner-icon-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .summoner-icon {
+        border: 3px solid #c8aa6e;
+        box-shadow: 0 0 20px rgba(200, 170, 110, 0.4);
+    }
+
+    .level-badge {
+        background-color: #091428;
+        border: 1px solid #c8aa6e;
+        color: #f0e6d2;
+        font-family: monospace;
+        padding: 2px 8px;
+    }
+
+    .stat-card {
+        background-color: rgba(1, 10, 19, 0.6);
+        border: 1px solid #1e2328;
+        transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+        border-color: #c8aa6e;
+        transform: translateY(-2px);
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #f0e6d2;
+    }
+
+    .stat-label {
+        color: #a09b8c;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Input styling */
+    .hextech-input {
+        background-color: #010a13;
+        border: 1px solid #463714;
+        color: #c8aa6e;
+    }
+    
+    .hextech-input:focus {
+        background-color: #010a13;
+        border-color: #c8aa6e;
+        color: #f0e6d2;
+        box-shadow: 0 0 10px rgba(200, 170, 110, 0.2);
+    }
+
+    .btn-hextech {
+        background: linear-gradient(180deg, #1e2328 0%, #1e282d 100%);
+        border: 1px solid #c8aa6e;
+        color: #c8aa6e;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-hextech:hover {
+        background: #c8aa6e;
+        color: #091428;
+    }
+</style>
+
+<div class="container mt-5">
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center align-items-center" style="height: 50vh;">
+            <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+    }
+    else if (dashboardData?.Summoner == null)
+    {
+        <!-- État Vide : Demande de liaison -->
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="hextech-container p-5 text-center rounded">
+                    <div class="mb-4 text-warning display-4">
+                        <i class="bi bi-link-45deg"></i>
+                    </div>
+                    <h2 class="text-uppercase mb-3" style="letter-spacing: 2px; color: #c8aa6e;">Synchronisation Requise</h2>
+                    <p class="text-muted mb-4">
+                        Liez votre compte Riot Games pour accéder à vos statistiques et personnaliser votre expérience.
+                    </p>
+                    
+                    <div class="card bg-transparent border-0">
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <input type="text" @bind="gameName" class="form-control hextech-input form-control-lg" placeholder="GameName (ex: Faker)">
+                                <span class="input-group-text hextech-input border-start-0 border-end-0 text-muted">#</span>
+                                <input type="text" @bind="tagLine" class="form-control hextech-input form-control-lg" placeholder="Tag" style="max-width: 100px;">
+                            </div>
+                            
+                            <button class="btn btn-hextech w-100 py-2 fw-bold" @onclick="LinkAccount" disabled="@isLinking">
+                                @if(isLinking) {
+                                    <span><span class="spinner-border spinner-border-sm me-2"></span> Recherche dans la faille...</span>
+                                } else {
+                                    <span><i class="bi bi-plug-fill me-2"></i> Connecter le Compte</span>
+                                }
+                            </button>
+
+                            @if (!string.IsNullOrEmpty(errorMessage))
+                            {
+                                <div class="alert alert-danger mt-3 bg-transparent border border-danger text-danger">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i> @errorMessage
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- État Connecté : Dashboard -->
+        var sum = dashboardData.Summoner;
+
+        <div class="hextech-container rounded overflow-hidden mb-4">
+            <!-- En-tête Profil -->
+            <div class="profile-header p-4 d-flex flex-column flex-md-row align-items-center gap-4">
+                <div class="summoner-icon-container">
+                    <img src="@($"https://ddragon.leagueoflegends.com/cdn/14.22.1/img/profileicon/{sum.ProfileIconId}.png")" 
+                         class="rounded-circle summoner-icon" width="120" alt="Icon">
+                    <span class="position-absolute bottom-0 start-50 translate-middle-x badge rounded-pill level-badge shadow">
+                        @sum.SummonerLevel
+                    </span>
+                </div>
+                
+                <div class="text-center text-md-start flex-grow-1">
+                    <h1 class="fw-bold mb-0" style="color: #f0e6d2; text-shadow: 0 0 10px rgba(200, 170, 110, 0.5);">
+                        @sum.GameName 
+                        <span style="color: #a09b8c; font-weight: 300;">#@sum.TagLine</span>
+                    </h1>
+                    <div class="mt-2">
+                        <span class="badge bg-success border border-success bg-opacity-25">En ligne</span>
+                        <span class="badge border border-secondary text-light ms-1">EU West</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-sm btn-outline-secondary" @onclick="UnlinkAccount" title="Changer de compte">
+                    <i class="bi bi-arrow-repeat"></i> Délier
+                </button>
+            </div>
+
+            <!-- Grille de Statistiques (Mockup pour l'instant) -->
+            <div class="p-4">
+                <h4 class="text-uppercase mb-4" style="color: #c8aa6e; border-left: 3px solid #c8aa6e; padding-left: 10px;">
+                    Aperçu de la Saison
+                </h4>
+                
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <div class="stat-card p-3 rounded text-center h-100">
+                            <div class="stat-value text-primary">Challenger 1435lp</div>
+                            <div class="stat-label">Rang Solo/Duo</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-card p-3 rounded text-center h-100">
+                            <div class="stat-value text-success">52%</div>
+                            <div class="stat-label">Winrate</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-card p-3 rounded text-center h-100">
+                            <div class="stat-value text-warning">3.45</div>
+                            <div class="stat-label">KDA Moyen</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-card p-3 rounded text-center h-100">
+                            <div class="stat-value text-info">142</div>
+                            <div class="stat-label">Parties Jouées</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-4 bg-transparent border border-info text-info d-flex align-items-center">
+                    <i class="bi bi-info-circle-fill fs-4 me-3"></i>
+                    <div>
+                        <strong>Note :</strong> Les statistiques ci-dessus sont simulées pour l'instant. 
+                        L'intégration complète des données de match (Winrate, KDA, Rang) arrivera dans la version 2.0 de l'API.
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private AppUserDto? dashboardData;
+    private bool isLoading = true;
+    private bool isLinking = false;
+    private string gameName = "";
+    private string tagLine = "";
+    private string errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        dashboardData = await LoLClient.GetMyDashboardAsync();
+        isLoading = false;
+    }
+
+    private async Task LinkAccount()
+    {
+        isLinking = true;
+        errorMessage = "";
+        
+        if (string.IsNullOrWhiteSpace(gameName) || string.IsNullOrWhiteSpace(tagLine))
+        {
+            errorMessage = "Veuillez remplir les deux champs.";
+            isLinking = false;
+            return;
+        }
+
+        bool success = await LoLClient.LinkSummonerAsync(gameName, tagLine);
+        
+        if (success)
+        {
+            await LoadData();
+        }
+        else
+        {
+            errorMessage = "Invocateur introuvable ou erreur API. Vérifiez l'orthographe.";
+        }
+        isLinking = false;
+    }
+    
+    private void UnlinkAccount()
+    {
+        if(dashboardData != null) dashboardData.Summoner = null;
+    }
+}

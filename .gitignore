@@ -54,3 +54,10 @@ publish/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.j
+
+# Windows reserved names
+nul
+
+
+# Bruno exports
+*.bru
