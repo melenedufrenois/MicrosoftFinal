@@ -50,4 +50,26 @@ public class LoLClient(HttpClient client)
             return await client.GetFromJsonAsync<AppUserDto>("/api/lol/dashboard");
         } catch { return null; }
     }
+
+    // 👇 MÉTHODES ADMIN 👇
+
+    public async Task<string> AdminSyncChampionsAsync()
+    {
+        var response = await client.PostAsync("/api/lol/admin/sync-champions", null);
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<AdminMessageDto>();
+            return result?.Message ?? "Synchronisation terminée.";
+        }
+        return "Erreur lors de la synchronisation.";
+    }
+
+    public async Task<string> AdminResetChampionsAsync()
+    {
+        var response = await client.DeleteAsync("/api/lol/admin/reset-champions");
+        return response.IsSuccessStatusCode ? "Base de données champions vidée." : "Erreur lors de la suppression.";
+    }
+
+    // Petit DTO interne pour lire le message { "message": "..." } de l'API
+    private class AdminMessageDto { public string Message { get; set; } = ""; }
 }

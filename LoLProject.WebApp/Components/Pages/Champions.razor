@@ -5,60 +5,182 @@
 
 <PageTitle>Wiki Champions</PageTitle>
 
-<div class="container">
-    <h1 class="mb-4 text-center text-primary">Wiki des Champions</h1>
+<style>
+    /* Barre de recherche Hextech */
+    .search-input {
+        background-color: #010a13;
+        border: 1px solid #463714;
+        color: #c8aa6e;
+        padding: 10px 15px;
+        font-size: 1.1rem;
+    }
+
+    .search-input:focus {
+        background-color: #010a13;
+        border-color: #c8aa6e;
+        color: #f0e6d2;
+        box-shadow: 0 0 10px rgba(200, 170, 110, 0.3);
+    }
+
+    .search-input::placeholder {
+        color: #5c5b57;
+    }
+
+    /* Carte Champion */
+    .champ-card {
+        background-color: #091428;
+        border: 1px solid #463714;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+        height: 100%;
+    }
+
+    .champ-card:hover {
+        border-color: #c8aa6e;
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Image du champion */
+    .champ-img-container {
+        background-color: #010a13;
+        padding: 10px;
+        border-bottom: 1px solid #463714;
+        text-align: center;
+    }
+
+    .champ-img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border: 2px solid #c8aa6e;
+        /* Masque hexagonal (optionnel, sinon rond/carré c'est bien aussi) */
+        /* border-radius: 50%; */ 
+    }
+
+    /* Corps de la carte */
+    .champ-body {
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .champ-name {
+        color: #f0e6d2;
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-bottom: 0.2rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .champ-title {
+        color: #a09b8c;
+        font-size: 0.8rem;
+        font-style: italic;
+        margin-bottom: 1rem;
+        display: block; /* Force le retour à la ligne */
+        min-height: 2.4em; /* Hauteur fixe pour aligner les boutons */
+    }
+
+    /* Bouton d'action */
+    .btn-details {
+        background: transparent;
+        border: 1px solid #c8aa6e;
+        color: #c8aa6e;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        width: 100%;
+        transition: all 0.2s;
+    }
+
+    .btn-details:hover {
+        background: #c8aa6e;
+        color: #091428;
+        font-weight: bold;
+    }
+</style>
+
+<div class="container mt-4">
+    
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 border-bottom border-secondary pb-3">
+        <h1 class="text-uppercase fw-bold mb-3 mb-md-0" style="color: #c8aa6e; letter-spacing: 2px;">
+            <i class="bi bi-grid-3x3-gap-fill me-2"></i> Wiki Champions
+        </h1>
+        
+        <div class="input-group" style="max-width: 300px;">
+            <span class="input-group-text bg-dark border-secondary text-muted">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control search-input" 
+                   placeholder="Rechercher..." 
+                   @bind="searchTerm" 
+                   @bind:event="oninput">
+        </div>
+    </div>
 
     @if (champions == null)
     {
-        <div class="text-center">
-            <div class="spinner-border text-primary" role="status">
+        <div class="d-flex flex-column align-items-center justify-content-center" style="height: 50vh;">
+            <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Chargement...</span>
             </div>
-            <p class="mt-2">Invocation des champions en cours...</p>
+            <p class="text-muted text-uppercase" style="letter-spacing: 1px;">Invocation des champions...</p>
         </div>
     }
     else
     {
-        <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
-            @foreach (var champ in champions)
-            {
-                <div class="col">
-                    <div class="card h-100 shadow-sm border-0 hover-effect">
-                        <img src="@champ.IconUrl" class="card-img-top" alt="@champ.Name" 
-                             style="max-height: 150px; object-fit: contain; background-color: #000; padding: 10px;">
-                        
-                        <div class="card-body text-center">
-                            <h5 class="card-title fw-bold">@champ.Name</h5>
-                            <p class="card-text text-muted small fst-italic">@champ.Title</p>
-                            <a href="champions/@champ.Id" class="btn btn-primary btn-sm w-100 mt-2">
-                                <i class="bi bi-lightbulb"></i> Tips & Astuces
-                            </a>
+        var filteredChampions = champions
+            .Where(c => string.IsNullOrEmpty(searchTerm) || 
+                        c.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        @if (!filteredChampions.Any())
+        {
+            <div class="text-center py-5">
+                <h3 class="text-muted">Aucun champion trouvé pour "@searchTerm"</h3>
+            </div>
+        }
+        else
+        {
+            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-3">
+                @foreach (var champ in filteredChampions)
+                {
+                    <div class="col">
+                        <div class="champ-card rounded">
+                            <div class="champ-img-container">
+                                <img src="@champ.IconUrl" class="champ-img shadow" alt="@champ.Name" loading="lazy">
+                            </div>
+                            
+                            <div class="champ-body">
+                                <div class="champ-name text-truncate">@champ.Name</div>
+                                <span class="champ-title text-truncate">@champ.Title</span>
+                                
+                                <a href="champions/@champ.Id" class="btn btn-details btn-sm">
+                                    <i class="bi bi-eye-fill me-1"></i> Voir
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-            }
-        </div>
+                }
+            </div>
+        }
     }
 </div>
 
-<style>
-    .hover-effect {
-        transition: transform 0.2s;
-    }
-    .hover-effect:hover {
-        transform: translateY(-5px);
-    }
-</style>
-
 @code {
     private List<ChampionDto>? champions;
+    private string searchTerm = "";
 
     protected override async Task OnInitializedAsync()
     {
         // On appelle l'API au chargement de la page
         champions = await LoLClient.GetChampionsAsync();
         
-        // Tri par ordre alphabétique pour faire propre
-        champions = champions.OrderBy(c => c.Name).ToList();
+        // Tri par ordre alphabétique
+        if (champions != null)
+        {
+            champions = champions.OrderBy(c => c.Name).ToList();
+        }
     }
 }

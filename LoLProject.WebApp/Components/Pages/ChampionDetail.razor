@@ -7,107 +7,265 @@
 
 <PageTitle>@(champion?.Name ?? "Détails") - Tips</PageTitle>
 
-<div class="container mt-4">
+<style>
+    /* Carte Principale du Champion */
+    .hextech-detail-card {
+        background: linear-gradient(135deg, #091428 0%, #0a323c 100%);
+        border: 2px solid #c8aa6e;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+        color: #f0e6d2;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* Image avec effet de fondu */
+    .champ-bg-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-right: 1px solid #463714;
+        mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    }
+
+    /* Typographie */
+    .champ-name-detail {
+        font-size: 3.5rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        background: linear-gradient(to bottom, #f0e6d2, #c8aa6e);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .champ-title-detail {
+        color: #a09b8c;
+        font-size: 1.5rem;
+        font-style: italic;
+        font-family: serif;
+        margin-bottom: 1.5rem;
+        display: block;
+    }
+
+    .lore-text {
+        color: #cdbe91;
+        font-size: 1.1rem;
+        line-height: 1.6;
+        border-left: 3px solid #463714;
+        padding-left: 1.5rem;
+    }
+
+    /* Section Tips */
+    .tips-section-title {
+        color: #c8aa6e;
+        border-bottom: 1px solid #463714;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Carte d'ajout de tip */
+    .add-tip-card {
+        background-color: #010a13;
+        border: 1px solid #463714;
+        padding: 1.5rem;
+    }
+
+    .hextech-textarea {
+        background-color: #091428;
+        border: 1px solid #463714;
+        color: #f0e6d2;
+        resize: none;
+    }
+
+    /* 👇 CORRECTIF : On éclaircit le placeholder pour qu'il soit lisible */
+    .hextech-textarea::placeholder {
+        color: #a09b8c; /* Beige grisé plus clair */
+        opacity: 0.8;   /* Assure une bonne visibilité sur tous les navigateurs */
+        font-style: italic;
+    }
+
+    .hextech-textarea:focus {
+        background-color: #091428;
+        border-color: #c8aa6e;
+        color: #f0e6d2;
+        box-shadow: 0 0 10px rgba(200, 170, 110, 0.2);
+    }
+
+    /* Liste des Tips */
+    .tip-item {
+        background-color: rgba(9, 20, 40, 0.8);
+        border: 1px solid #1e2328;
+        border-left: 3px solid #463714;
+        margin-bottom: 1rem;
+        transition: all 0.3s;
+    }
+
+    .tip-item:hover {
+        border-left-color: #c8aa6e;
+        background-color: rgba(10, 50, 60, 0.4);
+    }
+
+    .tip-author {
+        color: #c8aa6e;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .tip-time {
+        color: #5c5b57;
+        font-size: 0.8rem;
+    }
+
+    .tip-content {
+        color: #f0e6d2;
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+
+    <!-- Bouton Retour -->
+    <a href="champions" class="btn btn-sm btn-outline-secondary mb-3 border-0" style="color: #a09b8c;">
+        <i class="bi bi-arrow-left"></i> Retour au Wiki
+    </a>
+
     @if (champion == null)
     {
-        <div class="text-center"><div class="spinner-border"></div></div>
+    <div class="d-flex flex-column align-items-center justify-content-center" style="height: 50vh;">
+        <div class="spinner-border text-warning mb-3" role="status"></div>
+        <p class="text-muted">Chargement des archives...</p>
+    </div>
     }
     else
     {
-        <div class="card mb-4 border-0 shadow">
-            <div class="row g-0">
-                <div class="col-md-4">
-                    <img src="@champion.ImageUrl" class="img-fluid rounded-start w-100" alt="@champion.Name" style="min-height: 300px; object-fit: cover;">
-                </div>
-                <div class="col-md-8">
-                    <div class="card-body h-100 d-flex flex-column justify-content-center">
-                        <h1 class="display-4 fw-bold">@champion.Name</h1>
-                        <h3 class="text-muted fst-italic">@champion.Title</h3>
-                        <p class="card-text mt-3 lead">@champion.Description</p>
+    <!-- Carte Héros -->
+    <div class="hextech-detail-card rounded mb-5">
+        <div class="row g-0">
+            <div class="col-md-5 d-none d-md-block">
+                <img src="@champion.ImageUrl" class="champ-bg-image" alt="@champion.Name">
+            </div>
+            <div class="col-md-7">
+                <div class="card-body h-100 d-flex flex-column justify-content-center p-5">
+                    <!-- Visible seulement sur mobile -->
+                    <div class="d-md-none text-center mb-4">
+                        <img src="@champion.ImageUrl" class="rounded-circle border border-2 border-warning shadow" width="150" height="150" style="object-fit:cover;" alt="@champion.Name">
+                    </div>
+
+                    <h1 class="champ-name-detail mb-0">@champion.Name</h1>
+                    <span class="champ-title-detail">@champion.Title</span>
+
+                    <div class="lore-text">
+                        <i class="bi bi-quote text-secondary fs-4 me-2"></i>
+                        @champion.Description
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2><i class="bi bi-lightbulb-fill text-warning"></i> Tips de la communauté</h2>
-                </div>
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h3 class="tips-section-title">
+                <i class="bi bi-chat-square-text-fill me-2"></i> Conseil de Guerre
+            </h3>
 
-                <AuthorizeView>
-                    <Authorized>
-                        <div class="card mb-4 bg-light">
-                            <div class="card-body">
-                                <h5 class="card-title">Partager votre savoir</h5>
-                                <textarea @bind="newTipContent" @bind:event="oninput" class="form-control mb-2" rows="2" placeholder="Une astuce contre ce champion ?"></textarea>                                <button class="btn btn-success" @onclick="PostTip" disabled="@string.IsNullOrWhiteSpace(newTipContent)">
-                                    Publier mon Tip
-                                </button>
-                            </div>
+            <!-- Formulaire d'ajout -->
+            <AuthorizeView>
+                <Authorized>
+                    <div class="add-tip-card rounded mb-4 shadow-sm">
+                        <h5 class="text-gold mb-3" style="color: #c8aa6e; font-size: 1rem; text-transform: uppercase;">
+                            <i class="bi bi-pencil-fill me-2"></i> Partager une astuce
+                        </h5>
+                        <textarea @bind="newTipContent" @bind:event="oninput"
+                                  class="form-control hextech-textarea mb-3"
+                                  rows="3"
+                                  placeholder="Un combo secret ? Un counter pick ? Partagez votre savoir..."></textarea>
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-outline-warning" @onclick="PostTip" disabled="@string.IsNullOrWhiteSpace(newTipContent)">
+                                Publier le Tip
+                            </button>
                         </div>
-                    </Authorized>
-                    <NotAuthorized>
-                        <div class="alert alert-info">
-                            <a href="authentication/login">Connectez-vous</a> pour ajouter un tip !
-                        </div>
-                    </NotAuthorized>
-                </AuthorizeView>
-
-                @if (champion.Tips.Any())
-                {
-                    <div class="list-group">
-                        @foreach (var tip in champion.Tips.OrderByDescending(t => t.CreatedAt))
-                        {
-                            <div class="list-group-item list-group-item-action flex-column align-items-start">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1 fw-bold text-primary">@tip.Author.Username</h6>
-                                    <small class="text-muted">@tip.CreatedAt.ToLocalTime().ToString("g")</small>
-                                </div>
-                                <p class="mb-1">@tip.Content</p>
-                            </div>
-                        }
                     </div>
-                }
-                else
+                </Authorized>
+                <NotAuthorized>
+                    <div class="alert alert-dark border border-secondary d-flex align-items-center mb-4" style="background-color: #010a13;">
+                        <i class="bi bi-lock-fill fs-3 me-3 text-secondary"></i>
+                        <div>
+                            <strong>Zone restreinte.</strong>
+                            <br/>
+                            <a href="authentication/login" class="text-warning text-decoration-none">Connectez-vous</a> pour partager vos connaissances.
+                        </div>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeView>
+
+            <!-- Liste des Tips -->
+            @if (champion.Tips.Any())
+            {
+            <div class="d-flex flex-column gap-2">
+                @foreach (var tip in champion.Tips.OrderByDescending(t => t.CreatedAt))
                 {
-                    <p class="text-muted text-center p-5">Aucun tip pour le moment. Soyez le premier !</p>
+                <div class="tip-item p-3 rounded">
+                    <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-2" style="border-color: #1e2328 !important;">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-person-circle text-secondary"></i>
+                            <span class="tip-author">@tip.Author.Username</span>
+                        </div>
+                        <span class="tip-time">@tip.CreatedAt.ToLocalTime().ToString("g")</span>
+                    </div>
+                    <p class="tip-content mb-0">
+                        @tip.Content
+                    </p>
+                </div>
                 }
             </div>
+            }
+            else
+            {
+            <div class="text-center p-5 text-muted border border-secondary rounded" style="border-style: dashed !important; border-color: #463714 !important;">
+                <i class="bi bi-wind fs-1 d-block mb-3"></i>
+                Aucune astuce pour le moment.<br/>Soyez le premier à écrire l'histoire !
+            </div>
+            }
         </div>
+    </div>
     }
 </div>
 
 @code {
-    [Parameter] public int Id { get; set; }
-    private ChampionDetailDto? champion;
-    private string newTipContent = "";
+[Parameter] public int Id { get; set; }
+private ChampionDetailDto? champion;
+private string newTipContent = "";
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadData();
-    }
+protected override async Task OnInitializedAsync()
+{
+await LoadData();
+}
 
-    private async Task LoadData()
-    {
-        champion = await LoLClient.GetChampionDetailAsync(Id);
-    }
+private async Task LoadData()
+{
+champion = await LoLClient.GetChampionDetailAsync(Id);
+}
 
-    private async Task PostTip()
-    {
-        if (string.IsNullOrWhiteSpace(newTipContent)) return;
+private async Task PostTip()
+{
+if (string.IsNullOrWhiteSpace(newTipContent)) return;
 
-        // On récupère le résultat (Vrai ou Faux)
-        bool success = await LoLClient.AddTipAsync(Id, newTipContent);
+bool success = await LoLClient.AddTipAsync(Id, newTipContent);
 
-        if (success)
-        {
-            newTipContent = ""; // On vide seulement si ça a marché
-            await LoadData();   // On recharge la liste
-        }
-        else
-        {
-            // Optionnel : Afficher une alerte (nécessite du JS ou un flag d'erreur)
-            Console.WriteLine("Erreur lors de l'envoi du tip.");
-        }
-    }
+if (success)
+{
+newTipContent = "";
+await LoadData();
+}
+else
+{
+// Idéalement, utiliser un Toast ou une notification ici
+Console.WriteLine("Erreur lors de l'envoi du tip.");
+}
+}
 }
