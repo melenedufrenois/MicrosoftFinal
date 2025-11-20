@@ -1,0 +1,189 @@
+@page "/admin"
+@using Microsoft.AspNetCore.Authorization
+@using LoLProject.WebApp.Clients
+@attribute [Authorize]
+@inject LoLClient LoLClient
+
+<PageTitle>Administration Hextech</PageTitle>
+
+<style>
+    /* Style Panneau de Contrôle */
+    .admin-header {
+        border-bottom: 2px solid #c8aa6e;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+    }
+
+    .hextech-card {
+        background-color: #091428;
+        border: 1px solid #463714;
+        color: #f0e6d2;
+        transition: all 0.3s ease;
+    }
+
+    .hextech-card:hover {
+        border-color: #c8aa6e;
+        box-shadow: 0 0 15px rgba(200, 170, 110, 0.2);
+    }
+
+    .card-icon {
+        font-size: 2.5rem;
+        color: #c8aa6e;
+    }
+
+    /* Console de logs */
+    .console-output {
+        background-color: #010a13;
+        border: 1px solid #463714;
+        color: #0ac8b9; /* Cyan Hextech */
+        font-family: 'Consolas', monospace;
+        padding: 1rem;
+        height: 200px;
+        overflow-y: auto;
+        border-radius: 4px;
+    }
+
+    .log-entry {
+        margin-bottom: 0.5rem;
+        border-bottom: 1px solid #1e2328;
+        padding-bottom: 0.2rem;
+    }
+    
+    .log-time {
+        color: #5c5b57;
+        margin-right: 10px;
+    }
+</style>
+
+<div class="container mt-4">
+    
+    <div class="admin-header d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="text-uppercase fw-bold" style="color: #c8aa6e; letter-spacing: 2px;">
+                <i class="bi bi-shield-lock-fill"></i> Nexus Admin
+            </h1>
+            <p class="mb-0 text-gold">Panneau de gestion des données du jeu.</p>
+        </div>
+        <span class="badge bg-warning text-dark border border-light">Accès Gestionnaire</span>
+    </div>
+
+    <div class="row g-4">
+        <!-- Carte Synchronisation -->
+        <div class="col-md-6">
+            <div class="card hextech-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="card-icon mb-3">
+                        <i class="bi bi-cloud-arrow-down-fill"></i>
+                    </div>
+                    <h3 class="card-title text-uppercase">Synchronisation Riot</h3>
+                    <p class="card-text text-light-emphasis">
+                        Télécharge les dernières données des champions depuis l'API officielle Riot Games (DDragon).
+                        Cela mettra à jour les images, descriptions et titres.
+                    </p>
+                    <button class="btn btn-outline-warning w-100 mt-3" @onclick="SyncChampions" disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true">                            Traitement...
+                                Traitement...
+                            </span>
+                        }
+                        else
+                        {
+                            <span><i class="bi bi-arrow-repeat"></i> Lancer la Synchro</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte Reset -->
+        <div class="col-md-6">
+            <div class="card hextech-card h-100">
+                <div class="card-body text-center p-4">
+                    <div class="card-icon mb-3 text-danger">
+                        <i class="bi bi-radioactive"></i>
+                    </div>
+                    <h3 class="card-title text-uppercase text-danger">Purge Totale</h3>
+                    <p class="card-text text-light-emphasis">
+                        Supprime tous les champions de la base de données locale. 
+                        Utile si les données sont corrompues ou pour repartir à zéro avant une synchro.
+                    </p>
+                    <button class="btn btn-outline-danger w-100 mt-3" @onclick="ResetDb" disabled="@isLoading">
+                         <i class="bi bi-trash-fill"></i> Vider la base
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Console de logs -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h5 class="text-uppercase" style="color: #c8aa6e;">Console Système</h5>
+            <div class="console-output shadow-sm">
+                @if (logs.Count == 0)
+                {
+                    <span class="text-muted fst-italic">// En attente de commandes...</span>
+                }
+                else
+                {
+                    @foreach (var log in Enumerable.Reverse(logs))
+                    {
+                        <div class="log-entry">
+                            <span class="log-time">[@log.Time]</span> @log.Message
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isLoading = false;
+    private List<LogEntry> logs = new();
+
+    private async Task SyncChampions()
+    {
+        isLoading = true;
+        AddLog("Démarrage de la synchronisation avec Riot API...");
+        
+        try
+        {
+            // Appel au client que nous venons de mettre à jour
+            var message = await LoLClient.AdminSyncChampionsAsync();
+            AddLog($"SUCCÈS : {message}");
+        }
+        catch (Exception ex)
+        {
+            AddLog($"ERREUR CRITIQUE : {ex.Message}");
+        }
+        
+        isLoading = false;
+    }
+
+    private async Task ResetDb()
+    {
+        isLoading = true;
+        AddLog("Demande de suppression de la base de données...");
+
+        try
+        {
+            var message = await LoLClient.AdminResetChampionsAsync();
+            AddLog($"INFO : {message}");
+        }
+        catch (Exception ex)
+        {
+            AddLog($"ERREUR : {ex.Message}");
+        }
+
+        isLoading = false;
+    }
+
+    private void AddLog(string message)
+    {
+        logs.Add(new LogEntry(DateTime.Now.ToLongTimeString(), message));
+    }
+
+    record LogEntry(string Time, string Message);
+}
