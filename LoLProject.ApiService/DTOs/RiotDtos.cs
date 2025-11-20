@@ -80,17 +80,8 @@ public class RiotSummonerDto
 
 public record LinkSummonerRequest(string GameName, string TagLine);
 
-public record SummonerResponseDto(
-    string GameName, 
-    string TagLine, 
-    int ProfileIconId, 
-    long SummonerLevel
-);
-
-// DTO pour afficher l'Utilisateur (avec son Summoner s'il existe)
-public record AppUserResponseDto(
-    Guid Id, 
-    string Username, 
-    string Email, 
-    SummonerResponseDto? Summoner
-);
+// DTO pour l'envoi d'un tip (POST)
+public class CreateTipRequest
+{
+    public string Content { get; set; } = "";
+}
