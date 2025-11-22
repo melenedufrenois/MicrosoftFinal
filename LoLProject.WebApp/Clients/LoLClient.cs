@@ -1,10 +1,16 @@
 using System.Net.Http.Json;
+using LoLProject.ApiService.DTOs;
 using LoLProject.WebApp.DTOs;
+using CreateTipRequest = LoLProject.WebApp.DTOs.CreateTipRequest;
+using LinkSummonerRequest = LoLProject.WebApp.DTOs.LinkSummonerRequest;
 
 namespace LoLProject.WebApp.Clients;
 
 public class LoLClient(HttpClient client)
 {
+    // Petit DTO interne pour lire le message { "message": "..." } de l'API
+    private class AdminMessageDto { public string Message { get; set; } = ""; }
+    
     // Liste simple des champions
     public async Task<List<ChampionDto>> GetChampionsAsync() 
         => await client.GetFromJsonAsync<List<ChampionDto>>("/api/lol/champions") ?? [];
@@ -69,7 +75,60 @@ public class LoLClient(HttpClient client)
         var response = await client.DeleteAsync("/api/lol/admin/reset-champions");
         return response.IsSuccessStatusCode ? "Base de données champions vidée." : "Erreur lors de la suppression.";
     }
+    
+    // Récupérer les stats calculées
+    public async Task<DashboardStatsResponseDto?> GetDashboardStatsAsync()
+    {
+        try {
+            return await client.GetFromJsonAsync<DashboardStatsResponseDto>("/api/lol/dashboard/stats");
+        } catch { return null; }
+    }
+    
+    public async Task<List<AppUserDto>> AdminGetAllUsersAsync()
+        => await client.GetFromJsonAsync<List<AppUserDto>>("/api/lol/admin/users") ?? [];
 
-    // Petit DTO interne pour lire le message { "message": "..." } de l'API
-    private class AdminMessageDto { public string Message { get; set; } = ""; }
+    public async Task<bool> AdminUnlinkUserAsync(Guid userId)
+    {
+        var response = await client.DeleteAsync($"/api/lol/admin/users/{userId}/unlink");
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> AdminLinkUserAsync(Guid userId, string gameName, string tagLine)
+    {
+        var request = new LinkSummonerRequest { GameName = gameName, TagLine = tagLine };
+        var response = await client.PostAsJsonAsync($"/api/lol/admin/users/{userId}/link", request);
+        return response.IsSuccessStatusCode;
+    }
+    
+    // GESTION DES TIPS (ADMIN)
+    public async Task<List<AdminTipDto>> AdminGetAllTipsAsync()
+        => await client.GetFromJsonAsync<List<AdminTipDto>>("/api/lol/admin/tips") ?? [];
+
+    public async Task<bool> AdminDeleteTipAsync(int id)
+    {
+        var response = await client.DeleteAsync($"/api/lol/admin/tips/{id}");
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> AdminUpdateTipAsync(int id, string newContent)
+    {
+        var response = await client.PutAsJsonAsync($"/api/lol/admin/tips/{id}", new UpdateTipRequest(newContent));
+        return response.IsSuccessStatusCode;
+    }
+    
+    // Permet à l'utilisateur courant de se délier
+    public async Task<bool> UnlinkMySummonerAsync()
+    {
+        // On peut réutiliser l'endpoint admin en passant son propre ID, 
+        // OU MIEUX : Créer un endpoint dédié "POST /dashboard/unlink" côté API.
+        // Pour faire simple et rapide, créons un endpoint dédié.
+        var response = await client.PostAsync("/api/lol/dashboard/unlink", null);
+        return response.IsSuccessStatusCode;
+    }
+    
+    public async Task<bool> DeleteMyTipAsync(int tipId)
+    {
+        var response = await client.DeleteAsync($"/api/lol/tips/{tipId}");
+        return response.IsSuccessStatusCode;
+    }
 }

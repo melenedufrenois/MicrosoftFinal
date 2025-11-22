@@ -14,8 +14,11 @@ public record AppUserResponseDto(Guid Id,
 
 // 👇 NOUVEAUX DTOs POUR LES CHAMPIONS ET TIPS 👇
 
-public record AuthorResponseDto(string Username);
-
+public class AuthorResponseDto
+{
+    public Guid Id { get; set; } // 👈 L'ID manquant
+    public string Username { get; set; } = "";
+}
 public record TipResponseDto(
     int Id, 
     string Content, 

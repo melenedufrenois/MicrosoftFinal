@@ -1,13 +1,21 @@
 @page "/dashboard"
+@using LoLProject.ApiService.DTOs
 @using LoLProject.WebApp.Clients
 @using LoLProject.WebApp.DTOs
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
 @inject LoLClient LoLClient
 
-<PageTitle>Mon Dashboard - Invocateur</PageTitle>
+<PageTitle>Dashboard - Statistiques</PageTitle>
+
+@{
+    string ddragonVer = "14.23.1";
+    string champCdn = $"https://ddragon.leagueoflegends.com/cdn/{ddragonVer}/img/champion/";
+    string iconCdn = $"https://ddragon.leagueoflegends.com/cdn/{ddragonVer}/img/profileicon/";
+}
 
 <style>
+    /* --- STYLES HEXTECH GÉNÉRAUX --- */
     .hextech-container {
         border: 1px solid #463714;
         background: linear-gradient(135deg, #091428 0%, #0a323c 100%);
@@ -15,54 +23,7 @@
         color: #f0e6d2;
     }
 
-    .profile-header {
-        border-bottom: 2px solid #c8aa6e;
-        background: rgba(0, 0, 0, 0.3);
-    }
-
-    .summoner-icon-container {
-        position: relative;
-        display: inline-block;
-    }
-
-    .summoner-icon {
-        border: 3px solid #c8aa6e;
-        box-shadow: 0 0 20px rgba(200, 170, 110, 0.4);
-    }
-
-    .level-badge {
-        background-color: #091428;
-        border: 1px solid #c8aa6e;
-        color: #f0e6d2;
-        font-family: monospace;
-        padding: 2px 8px;
-    }
-
-    .stat-card {
-        background-color: rgba(1, 10, 19, 0.6);
-        border: 1px solid #1e2328;
-        transition: all 0.3s;
-    }
-
-    .stat-card:hover {
-        border-color: #c8aa6e;
-        transform: translateY(-2px);
-    }
-
-    .stat-value {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #f0e6d2;
-    }
-
-    .stat-label {
-        color: #a09b8c;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    /* Input styling */
+    /* --- FORMULAIRES & BOUTONS --- */
     .hextech-input {
         background-color: #010a13;
         border: 1px solid #463714;
@@ -82,26 +43,97 @@
         color: #c8aa6e;
         text-transform: uppercase;
         letter-spacing: 1px;
+        transition: all 0.3s;
     }
 
     .btn-hextech:hover {
         background: #c8aa6e;
         color: #091428;
     }
+
+    /* --- CARTES DE STATS GLOBALES --- */
+    .stat-card-global {
+        background: rgba(1, 10, 19, 0.6);
+        border: 1px solid #1e2328;
+        padding: 15px;
+        text-align: center;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+    .stat-card-global h2 { font-size: 2rem; font-weight: bold; margin: 0; }
+    .stat-card-global label { color: #c8aa6e; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+    
+    /* --- LIGNE D'HISTORIQUE DE MATCH --- */
+    .match-row {
+        display: flex;
+        align-items: center;
+        background-color: rgba(13, 18, 26, 0.8);
+        border-left: 5px solid #5c5b57;
+        margin-bottom: 8px;
+        padding: 10px;
+        transition: transform 0.2s, background-color 0.2s;
+    }
+    .match-row:hover { transform: translateX(5px); background-color: rgba(20, 30, 40, 0.9); }
+
+    .match-win { border-left-color: #286482; background: linear-gradient(90deg, rgba(40, 100, 130, 0.15) 0%, transparent 100%); }
+    .match-loss { border-left-color: #783438; background: linear-gradient(90deg, rgba(120, 52, 56, 0.15) 0%, transparent 100%); }
+
+    /* Textes lisibles */
+    .text-hextech-gold { color: #c8aa6e !important; }
+    .text-hextech-light { color: #f0e6d2 !important; }
+    .text-hextech-dim { color: #a09b8c !important; }
+
+    .game-meta { width: 110px; font-size: 0.85rem; line-height: 1.4; color: #f0e6d2; }
+    .game-result { font-weight: bold; font-size: 0.9rem; display: block; }
+    .text-win { color: #3d95d1; text-shadow: 0 0 5px rgba(61, 149, 209, 0.4); }
+    .text-loss { color: #e84057; text-shadow: 0 0 5px rgba(232, 64, 87, 0.4); }
+
+    .champ-section { display: flex; align-items: center; width: 190px; gap: 12px; }
+    .champ-img { width: 48px; height: 48px; border-radius: 50%; border: 2px solid #463714; }
+    .champ-name { font-weight: bold; color: #f0e6d2; font-size: 0.95rem; display: block; }
+    .champ-lvl { font-size: 0.8rem; color: #c8aa6e; }
+
+    .kda-section { width: 130px; text-align: center; }
+    .kda-nums { font-size: 1.1rem; font-weight: bold; letter-spacing: 1px; color: #f0e6d2; }
+    .kda-calc { font-size: 0.8rem; color: #a09b8c; }
+
+    /* Grille de stats */
+    .stats-grid { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 5px 20px; 
+        font-size: 0.9rem; 
+        color: #f0e6d2;
+        flex-grow: 1; 
+    }
+    .stat-item { display: flex; align-items: center; }
+    .stat-item i { color: #c8aa6e; margin-right: 8px; font-size: 0.9rem; width: 16px; text-align: center;}
+
+    /* Couleurs des Rangs */
+    .tier-IRON { color: #574d4f; }
+    .tier-BRONZE { color: #8c513a; }
+    .tier-SILVER { color: #80989d; }
+    .tier-GOLD { color: #cd8837; text-shadow: 0 0 5px rgba(205, 136, 55, 0.4); }
+    .tier-PLATINUM { color: #4E9996; text-shadow: 0 0 5px rgba(78, 153, 150, 0.4); }
+    .tier-EMERALD { color: #00d166; text-shadow: 0 0 5px rgba(0, 209, 102, 0.4); }
+    .tier-DIAMOND { color: #576bcc; text-shadow: 0 0 5px rgba(87, 107, 204, 0.4); }
+    .tier-MASTER { color: #9d48e0; text-shadow: 0 0 10px rgba(157, 72, 224, 0.5); }
+    .tier-GRANDMASTER { color: #ef4f4f; text-shadow: 0 0 10px rgba(239, 79, 79, 0.5); }
+    .tier-CHALLENGER { color: #f4c874; text-shadow: 0 0 15px rgba(244, 200, 116, 0.6); }
 </style>
 
-<div class="container mt-5">
+<div class="container mt-5 pb-5">
     @if (isLoading)
     {
         <div class="d-flex justify-content-center align-items-center" style="height: 50vh;">
-            <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden">Chargement...</span>
-            </div>
+            <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;"></div>
         </div>
     }
     else if (dashboardData?.Summoner == null)
     {
-        <!-- État Vide : Demande de liaison -->
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
                 <div class="hextech-container p-5 text-center rounded">
@@ -110,20 +142,20 @@
                     </div>
                     <h2 class="text-uppercase mb-3" style="letter-spacing: 2px; color: #c8aa6e;">Synchronisation Requise</h2>
                     <p class="text-light mb-4">
-                        Liez votre compte Riot Games pour accéder à vos statistiques et personnaliser votre expérience.
+                        Liez votre compte Riot Games pour accéder à vos statistiques.
                     </p>
                     
                     <div class="card bg-transparent border-0">
                         <div class="card-body">
                             <div class="input-group mb-3">
                                 <input type="text" @bind="gameName" class="form-control hextech-input form-control-lg" placeholder="GameName (ex: Faker)">
-                                <span class="input-group-text hextech-input border-start-0 border-end-0 text-muted">#</span>
+                                <span class="input-group-text hextech-input border-start-0 border-end-0 text-hextech-gold">#</span>
                                 <input type="text" @bind="tagLine" class="form-control hextech-input form-control-lg" placeholder="Tag" style="max-width: 100px;">
                             </div>
                             
                             <button class="btn btn-hextech w-100 py-2 fw-bold" @onclick="LinkAccount" disabled="@isLinking">
                                 @if(isLinking) {
-                                    <span><span class="spinner-border spinner-border-sm me-2"></span> Recherche dans la faille...</span>
+                                    <span><span class="spinner-border spinner-border-sm me-2"></span> Recherche...</span>
                                 } else {
                                     <span><i class="bi bi-plug-fill me-2"></i> Connecter le Compte</span>
                                 }
@@ -143,84 +175,183 @@
     }
     else
     {
-        <!-- État Connecté : Dashboard -->
         var sum = dashboardData.Summoner;
 
-        <div class="hextech-container rounded overflow-hidden mb-4">
-            <!-- En-tête Profil -->
-            <div class="profile-header p-4 d-flex flex-column flex-md-row align-items-center gap-4">
-                <div class="summoner-icon-container">
-                    <img src="@($"https://ddragon.leagueoflegends.com/cdn/14.22.1/img/profileicon/{sum.ProfileIconId}.png")" 
-                         class="rounded-circle summoner-icon" width="120" alt="Icon">
-                    <span class="position-absolute bottom-0 start-50 translate-middle-x badge rounded-pill level-badge shadow">
-                        @sum.SummonerLevel
-                    </span>
-                </div>
-                
-                <div class="text-center text-md-start flex-grow-1">
-                    <h1 class="fw-bold mb-0" style="color: #f0e6d2; text-shadow: 0 0 10px rgba(200, 170, 110, 0.5);">
-                        @sum.GameName 
-                        <span style="color: #a09b8c; font-weight: 300;">#@sum.TagLine</span>
-                    </h1>
-                    <div class="mt-2">
-                        <span class="badge bg-success border border-success bg-opacity-25">En ligne</span>
-                        <span class="badge border border-secondary text-light ms-1">EU West</span>
-                    </div>
-                </div>
-
-                <button class="btn btn-sm btn-outline-secondary" @onclick="UnlinkAccount" title="Changer de compte">
-                    <i class="bi bi-arrow-repeat"></i> Délier
-                </button>
+        <div class="hextech-container rounded mb-4 p-4 d-flex align-items-center gap-4">
+            <div style="position: relative;">
+                <img src="@($"{iconCdn}{sum.ProfileIconId}.png")" class="rounded-circle border border-2 border-warning" width="100">
+                <span class="badge bg-dark border border-warning position-absolute bottom-0 start-50 translate-middle-x">@sum.SummonerLevel</span>
             </div>
-
-            <!-- Grille de Statistiques (Mockup pour l'instant) -->
-            <div class="p-4">
-                <h4 class="text-uppercase mb-4" style="color: #c8aa6e; border-left: 3px solid #c8aa6e; padding-left: 10px;">
-                    Aperçu de la Saison
-                </h4>
-                
-                <div class="row g-3">
-                    <div class="col-md-3 col-6">
-                        <div class="stat-card p-3 rounded text-center h-100">
-                            <div class="stat-value text-primary">Challenger 1435lp</div>
-                            <div class="stat-label">Rang Solo/Duo</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6">
-                        <div class="stat-card p-3 rounded text-center h-100">
-                            <div class="stat-value text-success">52%</div>
-                            <div class="stat-label">Winrate</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6">
-                        <div class="stat-card p-3 rounded text-center h-100">
-                            <div class="stat-value text-warning">3.45</div>
-                            <div class="stat-label">KDA Moyen</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3 col-6">
-                        <div class="stat-card p-3 rounded text-center h-100">
-                            <div class="stat-value text-info">142</div>
-                            <div class="stat-label">Parties Jouées</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert alert-info mt-4 bg-transparent border border-info text-info d-flex align-items-center">
-                    <i class="bi bi-info-circle-fill fs-4 me-3"></i>
-                    <div>
-                        <strong>Note :</strong> Les statistiques ci-dessus sont simulées pour l'instant. 
-                        L'intégration complète des données de match (Winrate, KDA, Rang) arrivera dans la version 2.0 de l'API.
-                    </div>
-                </div>
+            <div>
+                <h1 class="m-0 fw-bold text-light">@sum.GameName <span class="text-hextech-dim fw-light">#@sum.TagLine</span></h1>
+                <div class="text-warning small text-uppercase">EU West • En Ligne</div>
+            </div>
+            <div class="ms-auto">
+                <button class="btn btn-sm btn-outline-secondary" @onclick="UnlinkAccount">Délier</button>
             </div>
         </div>
+
+        @if (stats?.Overview != null)
+        {
+            // On crée une variable locale 'ov' pour s'assurer que Blazor ne perde pas la référence
+            var ov = stats.Overview;
+
+            <div class="row g-3 mb-5">
+                <div class="col-md-3">
+                    <div class="stat-card-global rounded">
+                        @if (ov.SoloQueueTier == "Unranked")
+                        {
+                            <h2 class="text-hextech-dim">Unranked</h2>
+                            <label>Classé Solo/Duo</label>
+                        }
+                        else
+                        {
+                            // Utilisation de ov ici, sûr à 100%
+                            <h2 class="@GetTierClass(ov.SoloQueueTier)">
+                                @ov.SoloQueueTier @ov.SoloQueueRank
+                            </h2>
+                            
+                            <div class="d-flex justify-content-center gap-2 align-items-center mb-1">
+                                <span class="text-white fw-bold">@ov.SoloQueueLp LP</span>
+                                <span class="text-hextech-dim" style="font-size: 0.8rem;">|</span>
+                                @{
+                                    int totalRanked = ov.TotalRankedWins + ov.TotalRankedLosses;
+                                    int winrateRanked = totalRanked > 0 ? (int)((double)ov.TotalRankedWins / totalRanked * 100) : 0;
+                                }
+                                <span class="@(winrateRanked >= 50 ? "text-success" : "text-danger") small">
+                                    @winrateRanked% WR
+                                </span>
+                            </div>
+                            
+                            <label>@ov.TotalRankedWins V - @ov.TotalRankedLosses D</label>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="stat-card-global rounded">
+                        <h2 class="@(ov.WinRate >= 50 ? "text-success" : "text-danger")">
+                            @ov.WinRate%
+                        </h2>
+                        <label>Winrate (20 derniers)</label>
+                        <small class="text-hextech-gold mt-1">@ov.Wins V - @ov.Losses D</small>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="stat-card-global rounded">
+                        <h2 class="text-warning">@ov.AvgKda</h2>
+                        <label>KDA (@ov.AvgKills / @ov.AvgDeaths / @ov.AvgAssists)</label>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="stat-card-global rounded">
+                        <h2 class="text-info">@ov.AvgCsPerMinute</h2>
+                        <label>CS / Minute</label>
+                    </div>
+                </div>
+                
+                </div>
+
+            <h4 class="text-warning text-uppercase border-bottom border-secondary pb-2 mb-3">
+                <i class="bi bi-clock-history me-2"></i>Historique des matchs
+            </h4>
+
+            <div class="d-flex flex-column gap-2">
+                @foreach (var match in stats.MatchHistory)
+                {
+                    var s = match.Stats;
+                    var kda = s.Deaths == 0 ? "Perfect" : $"{Math.Round((double)(s.Kills + s.Assists) / s.Deaths, 2):0.00}";
+                    
+                    double csPerMin = match.Duration.TotalMinutes > 0 
+                        ? s.TotalCs / match.Duration.TotalMinutes 
+                        : 0;
+
+                    <div class="match-row rounded @(s.Win ? "match-win" : "match-loss")">
+                        
+                        <div class="game-meta d-flex flex-column">
+                            <span class="game-result @(s.Win ? "text-win" : "text-loss")">
+                                @(s.Win ? "VICTOIRE" : "DÉFAITE")
+                            </span>
+                            <span class="text-hextech-light">@match.GameMode</span>
+                            <span class="text-hextech-dim">@match.Duration.ToString(@"mm\:ss")</span>
+                            <span class="text-hextech-dim" style="font-size: 0.75rem;">@match.GameDate.ToString("dd/MM")</span>
+                        </div>
+
+                        <div class="champ-section">
+                            <img src="@(champCdn + s.ChampionName + ".png")" class="champ-img shadow" alt="@s.ChampionName">
+                            <div class="d-flex flex-column">
+                                <span class="champ-name">@s.ChampionName</span>
+                                <span class="champ-lvl">Niveau @s.ChampLevel</span>
+                            </div>
+                        </div>
+
+                        <div class="kda-section">
+                            <div class="kda-nums">
+                                @s.Kills / <span class="text-danger">@s.Deaths</span> / @s.Assists
+                            </div>
+                            <div class="kda-calc">@kda KDA</div>
+                        </div>
+
+                        <div class="stats-grid ms-4">
+                            <div class="stat-item" title="Total Sbires + Monstres">
+                                <i class="bi bi-bullseye"></i> 
+                                <span>
+                                    <strong>@s.TotalCs</strong> CS 
+                                    <span class="text-hextech-dim small">(@csPerMin.ToString("0.0")cs/m)</span>
+                                </span>
+                            </div>
+                            
+                            <div class="stat-item" title="Or Gagné">
+                                <i class="bi bi-coin text-warning"></i> 
+                                <span>@((s.GoldEarned / 1000.0).ToString("0.0"))k Gold</span>
+                            </div>
+                            
+                            <div class="stat-item" title="Dégâts aux Champions">
+                                <i class="bi bi-sword text-danger"></i> 
+                                <span>@s.TotalDamageDealtToChampions.ToString("N0") Dmg</span>
+                            </div>
+                            
+                            <div class="stat-item" title="Dégâts aux Tours">
+                                <i class="bi bi-bricks text-info"></i> 
+                                <span>@s.DamageDealtToBuildings.ToString("N0") Tours</span>
+                            </div>
+                            
+                            <div class="stat-item" title="Dégâts Subis">
+                                <i class="bi bi-shield-check"></i> 
+                                <span>@s.TotalDamageTaken.ToString("N0") Tanké</span>
+                            </div>
+                            
+                            <div class="stat-item">
+                                <i class="bi bi-person-badge"></i>
+                                <span class="text-hextech-gold text-uppercase" style="font-size: 0.8rem; letter-spacing: 1px;">
+                                    @s.TeamPosition
+                                </span>
+                            </div>
+                        </div>
+
+                    </div>
+                }
+            </div>
+        }
+        else if (isLoadingStats)
+        {
+            <div class="text-center text-light mt-5">
+                <div class="spinner-border text-warning mb-3"></div>
+                <p>Analyse des 20 dernières parties...</p>
+            </div>
+        }
     }
 </div>
 
 @code {
     private AppUserDto? dashboardData;
+    private DashboardStatsResponseDto? stats;
+    
     private bool isLoading = true;
+    private bool isLoadingStats = false;
+    
     private bool isLinking = false;
     private string gameName = "";
     private string tagLine = "";
@@ -236,6 +367,14 @@
         isLoading = true;
         dashboardData = await LoLClient.GetMyDashboardAsync();
         isLoading = false;
+
+        if (dashboardData?.Summoner != null)
+        {
+            isLoadingStats = true;
+            StateHasChanged();
+            stats = await LoLClient.GetDashboardStatsAsync();
+            isLoadingStats = false;
+        }
     }
 
     private async Task LinkAccount()
@@ -263,8 +402,25 @@
         isLinking = false;
     }
     
-    private void UnlinkAccount()
+    private async Task UnlinkAccount()
     {
-        if(dashboardData != null) dashboardData.Summoner = null;
+        if (await LoLClient.UnlinkMySummonerAsync())
+        {
+            if (dashboardData != null) 
+            {
+                dashboardData.Summoner = null;
+                stats = null;
+            }
+        }
+        else
+        {
+            Console.WriteLine("Erreur lors de la déconnexion du compte Riot.");
+        }
+    }
+    
+    private string GetTierClass(string? tier)
+    {
+        if (string.IsNullOrEmpty(tier)) return "tier-UNRANKED";
+        return $"tier-{tier.ToUpper()}";
     }
 }

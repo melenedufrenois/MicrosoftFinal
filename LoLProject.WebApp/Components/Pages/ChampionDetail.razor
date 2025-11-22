@@ -2,95 +2,27 @@
 @using LoLProject.WebApp.Clients
 @using LoLProject.WebApp.DTOs
 @using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
 @inject LoLClient LoLClient
 @inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JS
 
 <PageTitle>@(champion?.Name ?? "Détails") - Wiki</PageTitle>
 
 <style>
-    /* Carte Principale du Champion */
-    .hextech-detail-card {
-        background: linear-gradient(135deg, #091428 0%, #0a323c 100%);
-        border: 2px solid #c8aa6e;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
-        color: #f0e6d2;
-        overflow: hidden;
-        position: relative;
-    }
-
-    .champ-bg-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-right: 1px solid #463714;
-        mask-image: linear-gradient(to right, black 60%, transparent 100%);
-    }
-
-    .champ-name-detail {
-        font-size: 3.5rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        background: linear-gradient(to bottom, #f0e6d2, #c8aa6e);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-    }
-
-    .champ-title-detail {
-        color: #a09b8c;
-        font-size: 1.5rem;
-        font-style: italic;
-        font-family: serif;
-        margin-bottom: 1.5rem;
-        display: block;
-    }
-
-    .lore-text {
-        color: #cdbe91;
-        font-size: 1rem;
-        line-height: 1.6;
-        border-left: 3px solid #463714;
-        padding-left: 1.5rem;
-        max-height: 150px;
-        overflow-y: auto;
-    }
-
-    /* --- NOUVEAUX STYLES POUR LES STATS --- */
-    .stats-container {
-        background-color: rgba(1, 10, 19, 0.6);
-        border: 1px solid #463714;
-        padding: 1rem;
-        margin-top: 1.5rem;
-        border-radius: 4px;
-    }
-    
-    .stat-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-    }
-    
+    /* --- Styles existants (Carte, Stats, etc.) --- */
+    .hextech-detail-card { background: linear-gradient(135deg, #091428 0%, #0a323c 100%); border: 2px solid #c8aa6e; box-shadow: 0 0 20px rgba(0, 0, 0, 0.6); color: #f0e6d2; overflow: hidden; position: relative; }
+    .champ-bg-image { width: 100%; height: 100%; object-fit: cover; border-right: 1px solid #463714; mask-image: linear-gradient(to right, black 60%, transparent 100%); }
+    .champ-name-detail { font-size: 3.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; background: linear-gradient(to bottom, #f0e6d2, #c8aa6e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    .champ-title-detail { color: #a09b8c; font-size: 1.5rem; font-style: italic; font-family: serif; margin-bottom: 1.5rem; display: block; }
+    .lore-text { color: #cdbe91; font-size: 1rem; line-height: 1.6; border-left: 3px solid #463714; padding-left: 1.5rem; max-height: 150px; overflow-y: auto; }
+    .stats-container { background-color: rgba(1, 10, 19, 0.6); border: 1px solid #463714; padding: 1rem; margin-top: 1.5rem; border-radius: 4px; }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.9rem; }
     .stat-label { color: #a09b8c; text-transform: uppercase; font-size: 0.8rem; width: 100px; }
     .stat-value { color: #f0e6d2; font-weight: bold; width: 50px; text-align: right; margin-right: 10px;}
-    
-    .hextech-progress {
-        flex-grow: 1;
-        height: 6px;
-        background-color: #091428;
-        border: 1px solid #463714;
-        position: relative;
-    }
-    
-    .hextech-progress-bar {
-        height: 100%;
-        background: linear-gradient(90deg, #463714 0%, #c8aa6e 100%);
-        box-shadow: 0 0 5px rgba(200, 170, 110, 0.5);
-    }
-
-    /* Styles Tips */
+    .hextech-progress { flex-grow: 1; height: 6px; background-color: #091428; border: 1px solid #463714; position: relative; }
+    .hextech-progress-bar { height: 100%; background: linear-gradient(90deg, #463714 0%, #c8aa6e 100%); box-shadow: 0 0 5px rgba(200, 170, 110, 0.5); }
     .tips-section-title { color: #c8aa6e; border-bottom: 1px solid #463714; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
     .add-tip-card { background-color: #010a13; border: 1px solid #463714; padding: 1.5rem; }
     .hextech-textarea { background-color: #091428; border: 1px solid #463714; color: #f0e6d2; resize: none; }
@@ -101,6 +33,32 @@
     .tip-author { color: #c8aa6e; font-weight: bold; font-size: 0.9rem; }
     .tip-time { color: #5c5b57; font-size: 0.8rem; }
     .tip-content { color: #f0e6d2; font-size: 1rem; margin-top: 0.5rem; }
+
+    /* --- 🔴 NOUVEAUX STYLES (COPIÉS DE ADMIN) --- */
+
+    /* Bouton Carré Rouge (Style Admin) */
+    .btn-square {
+        width: 32px; height: 32px;
+        display: inline-flex; align-items: center; justify-content: center;
+        border-radius: 4px;
+        border: 1px solid;
+        transition: all 0.2s ease;
+        background-color: rgba(0,0,0,0.4);
+    }
+    
+    .btn-square-danger { color: #ff4d4d; border-color: #5c2b2b; }
+    .btn-square-danger:hover { background-color: #912323; color: white; border-color: #ff4d4d; box-shadow: 0 0 8px rgba(255, 77, 77, 0.4); }
+
+    /* Style Modale Hextech */
+    .modal-hextech-content {
+        background: linear-gradient(135deg, #091428 0%, #010a13 100%);
+        border: 2px solid #c8aa6e;
+        color: #f0e6d2;
+        box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    }
+    .modal-hextech-header { border-bottom: 1px solid #463714; }
+    .modal-hextech-footer { border-top: 1px solid #463714; }
+    .btn-close-hextech { filter: invert(1) sepia(1) saturate(5) hue-rotate(180deg); }
 </style>
 
 <div class="container mt-4 mb-5">
@@ -122,74 +80,33 @@
                 <div class="col-lg-5 d-none d-lg-block">
                     <img src="@champion.ImageUrl" class="champ-bg-image" alt="@champion.Name">
                 </div>
-                
                 <div class="col-lg-7">
                     <div class="card-body h-100 d-flex flex-column justify-content-center p-4 p-md-5">
                         <div class="d-lg-none text-center mb-4">
                             <img src="@champion.ImageUrl" class="rounded-circle border border-2 border-warning shadow" width="120" height="120" style="object-fit:cover;" alt="@champion.Name">
                         </div>
-
                         <h1 class="champ-name-detail mb-0">@champion.Name</h1>
                         <span class="champ-title-detail">@champion.Title</span>
-                        
                         <div class="lore-text mb-4">
                             <i class="bi bi-quote text-secondary fs-4 me-2"></i>
                             @champion.Description
                         </div>
-
                         @if (champion.Stats != null)
                         {
                             <div class="stats-container">
                                 <h5 class="mb-3 pb-2" style="color: #c8aa6e; border-bottom: 1px solid #463714; font-family: serif; letter-spacing: 1px;">
                                     <i class="bi bi-activity me-2"></i>Données de Combat <small style="color: #a09b8c; font-size: 0.7em;">(Niv 1)</small>
                                 </h5>
-                                
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <div class="stat-row" title="Points de vie (+@champion.Stats.HpPerLevel / niveau)">
-                                            <span class="stat-label">Vie</span>
-                                            <span class="stat-value">@champion.Stats.Hp</span>
-                                            <div class="hextech-progress">
-                                                <div class="hextech-progress-bar" style="width: @((double)champion.Stats.Hp / 700.0 * 100)%"></div>
-                                            </div>
-                                        </div>
-                                        <div class="stat-row" title="Dégâts d'attaque (+@champion.Stats.AttackDamagePerLevel / niveau)">
-                                            <span class="stat-label">Attaque</span>
-                                            <span class="stat-value">@champion.Stats.AttackDamage</span>
-                                            <div class="hextech-progress">
-                                                <div class="hextech-progress-bar" style="width: @((double)champion.Stats.AttackDamage / 80.0 * 100)%"></div>
-                                            </div>
-                                        </div>
-                                        <div class="stat-row" title="Vitesse d'attaque (+@champion.Stats.AttackSpeed% / niveau)">
-                                            <span class="stat-label">Vit. Att</span>
-                                            <span class="stat-value">@champion.Stats.AttackSpeed</span>
-                                            <div class="hextech-progress">
-                                                <div class="hextech-progress-bar" style="width: @((double)champion.Stats.AttackSpeed / 1.0 * 100)%"></div>
-                                            </div>
-                                        </div>
+                                        <div class="stat-row"><span class="stat-label">Vie</span><span class="stat-value">@champion.Stats.Hp</span><div class="hextech-progress"><div class="hextech-progress-bar" style="width: @((double)champion.Stats.Hp / 700.0 * 100)%"></div></div></div>
+                                        <div class="stat-row"><span class="stat-label">Attaque</span><span class="stat-value">@champion.Stats.AttackDamage</span><div class="hextech-progress"><div class="hextech-progress-bar" style="width: @((double)champion.Stats.AttackDamage / 80.0 * 100)%"></div></div></div>
+                                        <div class="stat-row"><span class="stat-label">Vit. Att</span><span class="stat-value">@champion.Stats.AttackSpeed</span><div class="hextech-progress"><div class="hextech-progress-bar" style="width: @((double)champion.Stats.AttackSpeed / 1.0 * 100)%"></div></div></div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="stat-row" title="Armure (+@champion.Stats.ArmorPerLevel / niveau)">
-                                            <span class="stat-label">Armure</span>
-                                            <span class="stat-value">@champion.Stats.Armor</span>
-                                            <div class="hextech-progress">
-                                                <div class="hextech-progress-bar" style="width: @((double)champion.Stats.Armor / 50.0 * 100)%"></div>
-                                            </div>
-                                        </div>
-                                        <div class="stat-row" title="Résistance Magique (+@champion.Stats.SpellBlockPerLevel / niveau)">
-                                            <span class="stat-label">Res. Mag</span>
-                                            <span class="stat-value">@champion.Stats.SpellBlock</span>
-                                            <div class="hextech-progress">
-                                                <div class="hextech-progress-bar" style="width: @((double)champion.Stats.SpellBlock / 50.0 * 100)%"></div>
-                                            </div>
-                                        </div>
-                                        <div class="stat-row">
-                                            <span class="stat-label">Portée</span>
-                                            <span class="stat-value">@champion.Stats.AttackRange</span>
-                                            <div class="hextech-progress">
-                                                <div class="hextech-progress-bar" style="width: @((double)champion.Stats.AttackRange / 650.0 * 100)%"></div>
-                                            </div>
-                                        </div>
+                                        <div class="stat-row"><span class="stat-label">Armure</span><span class="stat-value">@champion.Stats.Armor</span><div class="hextech-progress"><div class="hextech-progress-bar" style="width: @((double)champion.Stats.Armor / 50.0 * 100)%"></div></div></div>
+                                        <div class="stat-row"><span class="stat-label">Res. Mag</span><span class="stat-value">@champion.Stats.SpellBlock</span><div class="hextech-progress"><div class="hextech-progress-bar" style="width: @((double)champion.Stats.SpellBlock / 50.0 * 100)%"></div></div></div>
+                                        <div class="stat-row"><span class="stat-label">Portée</span><span class="stat-value">@champion.Stats.AttackRange</span><div class="hextech-progress"><div class="hextech-progress-bar" style="width: @((double)champion.Stats.AttackRange / 650.0 * 100)%"></div></div></div>
                                     </div>
                                 </div>
                             </div>
@@ -233,18 +150,29 @@
                     </NotAuthorized>
                 </AuthorizeView>
 
-                @if (champion.Tips.Any())
+                @if (champion.Tips != null && champion.Tips.Any())
                 {
-                    <div class="d-flex flex-column gap-2">
+                    <div class="d-flex flex-column gap-3">
                         @foreach (var tip in champion.Tips.OrderByDescending(t => t.CreatedAt))
                         {
-                            <div class="tip-item p-3 rounded">
-                                <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-2" style="border-color: #1e2328 !important;">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="bi bi-person-circle text-secondary"></i>
-                                        <span class="tip-author">@tip.Author.Username</span>
+                            <div class="tip-item p-3 rounded position-relative">
+                                <div class="d-flex justify-content-between align-items-start border-bottom border-secondary pb-2 mb-2" style="border-color: #1e2328 !important;">
+                                    
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div>
+                                            <div class="tip-author">@tip.Author.Username</div>
+                                            <div class="tip-time" style="font-size: 0.75rem;">
+                                                @tip.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                            </div>
+                                        </div>
                                     </div>
-                                    <span class="tip-time">@tip.CreatedAt.ToLocalTime().ToString("g")</span>
+                                    
+                                    @if (currentUserId.HasValue && currentUserId.Value == tip.Author.Id)
+                                    {
+                                        <button class="btn-square btn-square-danger" @onclick="() => RequestDelete(tip.Id)" title="Supprimer">
+                                            <i class="bi bi-trash-fill small"></i>
+                                        </button>
+                                    }
                                 </div>
                                 <p class="tip-content mb-0">@tip.Content</p>
                             </div>
@@ -263,13 +191,42 @@
     }
 </div>
 
+<div class="modal fade" id="deleteTipModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-hextech-content">
+            <div class="modal-header modal-hextech-header">
+                <h5 class="modal-title text-danger text-uppercase fw-bold">
+                    <i class="bi bi-exclamation-diamond-fill me-2"></i> Suppression
+                </h5>
+                <button type="button" class="btn-close btn-close-hextech" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="fs-5 text-light mb-0">
+                    Voulez-vous vraiment détruire ce savoir ancestral ?<br/>
+                    <span class="text-muted small">(Cette action est irréversible)</span>
+                </p>
+            </div>
+            <div class="modal-footer modal-hextech-footer justify-content-center">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" @onclick="ConfirmDelete">
+                    Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @code {
     [Parameter] public int Id { get; set; }
     private ChampionDetailDto? champion;
     private string newTipContent = "";
+    private Guid? currentUserId;
+    private int tipIdToDelete;
 
     protected override async Task OnInitializedAsync()
     {
+        var myProfile = await LoLClient.GetMyDashboardAsync();
+        if (myProfile != null) currentUserId = myProfile.Id;
         await LoadData();
     }
 
@@ -282,10 +239,22 @@
     {
         if (string.IsNullOrWhiteSpace(newTipContent)) return;
         bool success = await LoLClient.AddTipAsync(Id, newTipContent);
+        if (success) { newTipContent = ""; await LoadData(); }
+    }
+
+    private void RequestDelete(int tipId)
+    {
+        tipIdToDelete = tipId;
+        JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('deleteTipModal')).show()");
+    }
+
+    private async Task ConfirmDelete()
+    {
+        bool success = await LoLClient.DeleteMyTipAsync(tipIdToDelete);
         if (success)
         {
-            newTipContent = ""; 
             await LoadData();
+            await JS.InvokeVoidAsync("eval", "bootstrap.Modal.getInstance(document.getElementById('deleteTipModal')).hide()");
         }
     }
 }

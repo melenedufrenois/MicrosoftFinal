@@ -143,3 +143,143 @@ public class CreateTipRequest
 {
     public string Content { get; set; } = "";
 }
+
+public class RiotMatchDto
+{
+    [JsonPropertyName("info")]
+    public RiotMatchInfoDto Info { get; set; } = new();
+}
+
+public class RiotMatchInfoDto
+{
+    [JsonPropertyName("gameDuration")]
+    public long GameDuration { get; set; } // Durée en secondes
+
+    [JsonPropertyName("gameCreation")]
+    public long GameCreation { get; set; } // Date
+
+    [JsonPropertyName("gameMode")]
+    public string GameMode { get; set; } = ""; 
+
+    [JsonPropertyName("participants")]
+    public List<RiotParticipantDto> Participants { get; set; } = new();
+}
+
+public class RiotParticipantDto
+{
+    [JsonPropertyName("puuid")]
+    public string Puuid { get; set; } = "";
+
+    [JsonPropertyName("championName")]
+    public string ChampionName { get; set; } = "";
+    
+    [JsonPropertyName("championId")]
+    public int ChampionId { get; set; }
+
+    [JsonPropertyName("champLevel")]
+    public int ChampLevel { get; set; }
+
+    [JsonPropertyName("kills")]
+    public int Kills { get; set; }
+
+    [JsonPropertyName("deaths")]
+    public int Deaths { get; set; }
+
+    [JsonPropertyName("assists")]
+    public int Assists { get; set; }
+
+    [JsonPropertyName("win")]
+    public bool Win { get; set; }
+    
+    [JsonPropertyName("teamPosition")]
+    public string TeamPosition { get; set; } = "";
+
+    // --- FARM ---
+    [JsonPropertyName("totalMinionsKilled")]
+    public int TotalMinionsKilled { get; set; }
+    
+    [JsonPropertyName("totalAllyJungleMinionsKilled")]
+    public int TotalAllyJungleMinionsKilled { get; set; }
+    
+    [JsonPropertyName("totalEnemyJungleMinionsKilled")]
+    public int TotalEnemyJungleMinionsKilled { get; set; }
+
+    // Propriété calculée pour le CS Total
+    public int TotalCs => TotalMinionsKilled + TotalAllyJungleMinionsKilled + TotalEnemyJungleMinionsKilled;
+
+    // --- ECONOMIE & DEGATS ---
+    [JsonPropertyName("goldEarned")]
+    public int GoldEarned { get; set; }
+
+    [JsonPropertyName("totalDamageDealtToChampions")]
+    public int TotalDamageDealtToChampions { get; set; }
+
+    [JsonPropertyName("totalDamageTaken")]
+    public int TotalDamageTaken { get; set; }
+
+    [JsonPropertyName("damageDealtToBuildings")]
+    public int DamageDealtToBuildings { get; set; }
+}
+
+// --- DTOs POUR LE FRONTEND (Dashboard) ---
+
+public class DashboardStatsResponseDto
+{
+    public OverviewStatsDto Overview { get; set; } = new();
+    public List<MatchSummaryDto> MatchHistory { get; set; } = new();
+}
+
+public class OverviewStatsDto
+{
+    public int TotalGames { get; set; }
+    public int Wins { get; set; }
+    public int Losses { get; set; }
+    public double WinRate { get; set; }
+    
+    // Moyennes
+    public double AvgKills { get; set; }
+    public double AvgDeaths { get; set; }
+    public double AvgAssists { get; set; }
+    public double AvgKda { get; set; }
+    public double AvgCs { get; set; }
+    public double AvgCsPerMinute { get; set; }
+    public double AvgGold { get; set; }
+    public double AvgDamage { get; set; }
+    public string SoloQueueTier { get; set; } = "Unranked"; 
+    public string SoloQueueRank { get; set; } = "";
+    public int SoloQueueLp { get; set; }
+    public int TotalRankedWins { get; set; }
+    public int TotalRankedLosses { get; set; }
+}
+
+public class MatchSummaryDto
+{
+    public string GameMode { get; set; } = "";
+    public TimeSpan Duration { get; set; }
+    public DateTime GameDate { get; set; }
+    public RiotParticipantDto Stats { get; set; } = new();
+}
+
+public class RiotLeagueEntryDto
+{
+    [JsonPropertyName("queueType")]
+    public string QueueType { get; set; } = ""; // ex: "RANKED_SOLO_5x5"
+
+    [JsonPropertyName("tier")]
+    public string Tier { get; set; } = ""; // ex: "GOLD"
+
+    [JsonPropertyName("rank")]
+    public string Rank { get; set; } = ""; // ex: "IV"
+
+    [JsonPropertyName("leaguePoints")]
+    public int LeaguePoints { get; set; }
+
+    [JsonPropertyName("wins")]
+    public int Wins { get; set; }
+
+    [JsonPropertyName("losses")]
+    public int Losses { get; set; }
+}
+
+public record AdminTipDto(int Id, string Content, DateTime CreatedAt, string AuthorName, string ChampionName, string ChampionIconUrl);
+public record UpdateTipRequest(string Content);

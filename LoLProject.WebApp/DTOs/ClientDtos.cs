@@ -1,3 +1,5 @@
+using LoLProject.ApiService.DTOs;
+
 namespace LoLProject.WebApp.DTOs;
 
 // --- Champions ---
@@ -48,6 +50,7 @@ public class TipDto
 
 public class AuthorDto
 {
+    public Guid Id { get; set; }
     public string Username { get; set; } = "";
 }
 

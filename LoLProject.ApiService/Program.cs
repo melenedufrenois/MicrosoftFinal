@@ -16,6 +16,9 @@ builder.AddServiceDefaults();
 // OpenAPI
 builder.Services.AddOpenApi();
 
+// Cache en mémoire
+builder.Services.AddMemoryCache();
+
 // Intégration Aspire + EF Core (utilise ConnectionStrings__lolproject)
 builder.AddSqlServerDbContext<AppDb>(connectionName: "lolproject");
 

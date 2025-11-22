@@ -1,189 +1,447 @@
 @page "/admin"
+@using LoLProject.ApiService.DTOs
 @using Microsoft.AspNetCore.Authorization
 @using LoLProject.WebApp.Clients
+@using LoLProject.WebApp.DTOs
 @attribute [Authorize]
 @inject LoLClient LoLClient
+@inject IJSRuntime JS
 
 <PageTitle>Administration Hextech</PageTitle>
 
+@{
+string iconCdn = "https://ddragon.leagueoflegends.com/cdn/14.23.1/img/profileicon/";
+}
+
 <style>
-    /* Style Panneau de Contrôle */
-    .admin-header {
-        border-bottom: 2px solid #c8aa6e;
-        margin-bottom: 2rem;
-        padding-bottom: 1rem;
+    /* --- Style Général --- */
+    .admin-header { border-bottom: 2px solid #c8aa6e; margin-bottom: 2rem; padding-bottom: 1rem; }
+    .text-gold { color: #c8aa6e; }
+
+    /* --- Animation Accordéon Smooth --- */
+    .accordion-collapse {
+        transition: height 0.35s ease-in-out; /* Animation fluide */
     }
 
-    .hextech-card {
-        background-color: #091428;
+    /* Petite retouche pour l'icône joueur */
+    .summoner-mini-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 1px solid #c8aa6e;
+        margin-right: 8px;
+    }
+
+    /* --- ACCORDION HEXTECH --- */
+    .accordion-hextech { --bs-accordion-border-color: #463714; --bs-accordion-bg: transparent; }
+    .accordion-hextech .accordion-item {
+        background-color: rgba(9, 20, 40, 0.8);
         border: 1px solid #463714;
-        color: #f0e6d2;
-        transition: all 0.3s ease;
+        margin-bottom: 10px;
     }
-
-    .hextech-card:hover {
-        border-color: #c8aa6e;
-        box-shadow: 0 0 15px rgba(200, 170, 110, 0.2);
-    }
-
-    .card-icon {
-        font-size: 2.5rem;
+    .accordion-hextech .accordion-button {
+        background: linear-gradient(90deg, #091428 0%, #1e2328 100%);
         color: #c8aa6e;
+        font-weight: bold;
+        text-transform: uppercase;
+        border-bottom: 1px solid #463714;
     }
+    .accordion-hextech .accordion-button:not(.collapsed) {
+        background: linear-gradient(90deg, #463714 0%, #c8aa6e 100%);
+        color: #091428;
+        box-shadow: none;
+    }
+    .accordion-hextech .accordion-body { color: #f0e6d2; padding: 1.5rem; }
 
-    /* Console de logs */
+    .collapse { transition: height 0.4s ease; }
+
+    /* --- Tableaux & Cartes --- */
+    .hextech-table { width: 100%; border-collapse: separate; border-spacing: 0 5px; }
+    .hextech-table thead th { color: #a09b8c; text-transform: uppercase; font-size: 0.8rem; padding: 10px; border-bottom: 1px solid #463714; }
+    .hextech-table tbody tr { background-color: rgba(1, 10, 19, 0.6); transition: background 0.2s; }
+    .hextech-table tbody tr:hover { background-color: rgba(20, 30, 50, 0.8); }
+    .hextech-table td { padding: 12px; color: #f0e6d2; vertical-align: middle; border-top: 1px solid #1e2328; border-bottom: 1px solid #1e2328; }
+    .hextech-table td:first-child { border-left: 3px solid #463714; border-radius: 4px 0 0 4px; }
+    .hextech-table td:last-child { border-right: 1px solid #1e2328; border-radius: 0 4px 4px 0; }
+
+    .hextech-card { background-color: rgba(9, 20, 40, 0.9); border: 1px solid #463714; color: #f0e6d2; transition: all 0.3s ease; }
+    .hextech-card:hover { border-color: #c8aa6e; box-shadow: 0 0 15px rgba(200, 170, 110, 0.2); }
+    .card-icon { font-size: 2.5rem; color: #c8aa6e; }
+
+    .summoner-mini-icon { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #c8aa6e; margin-right: 8px; vertical-align: middle; }
+
+    /* --- Console --- */
     .console-output {
-        background-color: #010a13;
-        border: 1px solid #463714;
-        color: #0ac8b9; /* Cyan Hextech */
-        font-family: 'Consolas', monospace;
-        padding: 1rem;
-        height: 200px;
-        overflow-y: auto;
-        border-radius: 4px;
+        background-color: #010a13; border: 1px solid #463714; color: #0ac8b9;
+        font-family: 'Consolas', monospace; padding: 1rem; height: 150px; overflow-y: auto; font-size: 0.85rem;
     }
+    .log-entry { margin-bottom: 0.2rem; border-bottom: 1px solid rgba(30, 35, 40, 0.5); }
+    .log-time { color: #5c5b57; margin-right: 10px; }
 
-    .log-entry {
-        margin-bottom: 0.5rem;
-        border-bottom: 1px solid #1e2328;
-        padding-bottom: 0.2rem;
-    }
-    
-    .log-time {
-        color: #5c5b57;
-        margin-right: 10px;
-    }
+    /* --- Modales --- */
+    .modal-content-hextech { background: linear-gradient(135deg, #091428 0%, #010a13 100%); border: 2px solid #c8aa6e; color: #f0e6d2; }
+    .modal-header, .modal-footer { border-color: #463714; }
+    .btn-close-white { filter: invert(1); }
+    .hextech-textarea { background-color: #010a13; border: 1px solid #463714; color: #c8aa6e; }
+    .hextech-textarea:focus { background-color: #010a13; border-color: #c8aa6e; color: #f0e6d2; box-shadow: 0 0 10px rgba(200, 170, 110, 0.2); }
 </style>
 
-<div class="container mt-4">
-    
+<div class="container mt-4 mb-5">
+
     <div class="admin-header d-flex justify-content-between align-items-center">
         <div>
             <h1 class="text-uppercase fw-bold" style="color: #c8aa6e; letter-spacing: 2px;">
                 <i class="bi bi-shield-lock-fill"></i> Nexus Admin
             </h1>
-            <p class="mb-0 text-gold">Panneau de gestion des données du jeu.</p>
+            <p class="mb-0 text-gold opacity-75">Gestion des données, invocateurs et contenu.</p>
         </div>
-        <span class="badge bg-warning text-dark border border-light">Accès Gestionnaire</span>
+        <span class="badge bg-warning text-dark border border-light shadow">Mode Super-Admin</span>
     </div>
 
-    <div class="row g-4">
-        <!-- Carte Synchronisation -->
-        <div class="col-md-6">
-            <div class="card hextech-card h-100">
-                <div class="card-body text-center p-4">
-                    <div class="card-icon mb-3">
-                        <i class="bi bi-cloud-arrow-down-fill"></i>
-                    </div>
-                    <h3 class="card-title text-uppercase">Synchronisation Riot</h3>
-                    <p class="card-text text-light-emphasis">
-                        Télécharge les dernières données des champions depuis l'API officielle Riot Games (DDragon).
-                        Cela mettra à jour les images, descriptions et titres.
-                    </p>
-                    <button class="btn btn-outline-warning w-100 mt-3" @onclick="SyncChampions" disabled="@isLoading">
-                        @if (isLoading)
-                        {
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true">                            Traitement...
-                                Traitement...
-                            </span>
-                        }
-                        else
-                        {
-                            <span><i class="bi bi-arrow-repeat"></i> Lancer la Synchro</span>
-                        }
-                    </button>
-                </div>
-            </div>
-        </div>
+    <div class="accordion accordion-hextech mb-5" id="adminAccordion">
 
-        <!-- Carte Reset -->
-        <div class="col-md-6">
-            <div class="card hextech-card h-100">
-                <div class="card-body text-center p-4">
-                    <div class="card-icon mb-3 text-danger">
-                        <i class="bi bi-radioactive"></i>
-                    </div>
-                    <h3 class="card-title text-uppercase text-danger">Purge Totale</h3>
-                    <p class="card-text text-light-emphasis">
-                        Supprime tous les champions de la base de données locale. 
-                        Utile si les données sont corrompues ou pour repartir à zéro avant une synchro.
-                    </p>
-                    <button class="btn btn-outline-danger w-100 mt-3" @onclick="ResetDb" disabled="@isLoading">
-                         <i class="bi bi-trash-fill"></i> Vider la base
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Console de logs -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <h5 class="text-uppercase" style="color: #c8aa6e;">Console Système</h5>
-            <div class="console-output shadow-sm">
-                @if (logs.Count == 0)
-                {
-                    <span class="text-muted fst-italic">// En attente de commandes...</span>
-                }
-                else
-                {
-                    @foreach (var log in Enumerable.Reverse(logs))
-                    {
-                        <div class="log-entry">
-                            <span class="log-time">[@log.Time]</span> @log.Message
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSystem">
+                    <i class="bi bi-cpu-fill me-2"></i> Système & Données
+                </button>
+            </h2>
+            <div id="collapseSystem" class="accordion-collapse collapse show" data-bs-parent="#adminAccordion">
+                <div class="accordion-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card hextech-card h-100">
+                                <div class="card-body text-center p-4">
+                                    <div class="card-icon mb-3"><i class="bi bi-cloud-arrow-down-fill"></i></div>
+                                    <h5 class="card-title text-uppercase text-gold">Synchronisation Riot</h5>
+                                    <p class="card-text small text-light opacity-75">Mise à jour DataDragon (Images, Stats, Lore).</p>
+                                    <button class="btn btn-outline-warning w-100 mt-2" @onclick="SyncChampions" disabled="@isSyncing">
+                                        @if (isSyncing) { <span class="spinner-border spinner-border-sm me-2"></span><span>Travail en cours...</span> }
+                                        else { <span><i class="bi bi-arrow-repeat"></i> Lancer Synchro</span> }
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    }
+                        <div class="col-md-6">
+                            <div class="card hextech-card h-100">
+                                <div class="card-body text-center p-4">
+                                    <div class="card-icon mb-3 text-danger"><i class="bi bi-radioactive"></i></div>
+                                    <h5 class="card-title text-uppercase text-danger">Purge Base de Données</h5>
+                                    <p class="card-text small text-light opacity-75">Supprime tous les champions locaux.</p>
+                                    <button class="btn btn-outline-danger w-100 mt-2" @onclick="ResetDb" disabled="@isPurging">
+                                        @if (isPurging) { <span class="spinner-border spinner-border-sm"></span><span>Nettoyage...</span> }
+                                        else { <span><i class="bi bi-trash-fill"></i> Tout Supprimer</span> }
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseUsers">
+                    <i class="bi bi-people-fill me-2"></i> Invocateurs (@(users?.Count ?? 0))
+                </button>
+            </h2>
+            <div id="collapseUsers" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
+                <div class="accordion-body">
+                    <div class="table-responsive">
+                        <table class="hextech-table">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Utilisateur</th>
+                                <th>Compte Lié</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @if (users != null)
+                            {
+                            @foreach (var user in users)
+                            {
+                            <tr>
+                                <td><span class="text-gold small">#@user.Id.ToString().Substring(0, 6)...</span></td>
+                                <td class="fw-bold text-white">@user.Username</td>
+                                <td>
+                                    @if (user.Summoner != null)
+                                    {
+                                    <img src="@($"{iconCdn}{user.Summoner.ProfileIconId}.png")" class="summoner-mini-icon" alt="icon" />
+                                    <span class="text-gold">@user.Summoner.GameName</span>
+                                    <span class="text-muted small">#@user.Summoner.TagLine</span>
+                                    }
+                                    else { <span class="badge bg-secondary bg-opacity-25 border border-secondary text-secondary">Non lié</span> }
+                                </td>
+                                <td class="text-end">
+                                    @if (user.Summoner != null)
+                                    {
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => RequestUnlinkUser(user)">
+                                        <i class="bi bi-link-45deg"></i>
+                                    </button>
+                                    }
+                                    else
+                                    {
+                                    <button class="btn btn-sm btn-outline-success" @onclick="() => OpenLinkModal(user)">
+                                        <i class="bi bi-plug-fill"></i>
+                                    </button>
+                                    }
+                                </td>
+                            </tr>
+                            }
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTips">
+                    <i class="bi bi-chat-quote-fill me-2"></i> Conseils & Tips (@(tips?.Count ?? 0))
+                </button>
+            </h2>
+            <div id="collapseTips" class="accordion-collapse collapse" data-bs-parent="#adminAccordion">
+                <div class="accordion-body">
+                    <div class="table-responsive">
+                        <table class="hextech-table">
+                            <thead>
+                            <tr>
+                                <th>Champion</th>
+                                <th>Auteur</th>
+                                <th>Contenu</th>
+                                <th>Date</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @if (tips != null)
+                            {
+                            @foreach (var tip in tips)
+                            {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="@tip.ChampionIconUrl" width="32" height="32" class="rounded-circle border border-secondary">
+                                        <span class="text-gold">@tip.ChampionName</span>
+                                    </div>
+                                </td>
+                                <td>@tip.AuthorName</td>
+                                <td>
+                                    @{ var preview = tip.Content.Length > 50 ? tip.Content.Substring(0, 50) + "..." : tip.Content; }
+                                    <span class="text-light" title="@tip.Content">@preview</span>
+                                </td>
+                                <td class="small text-gold">@tip.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => OpenEditTipModal(tip)">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => RequestDeleteTip(tip)">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            }
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <h6 class="text-uppercase text-gold mb-2"><i class="bi bi-terminal-fill me-2"></i>Console</h6>
+            <div class="console-output shadow-sm">
+                @if (logs.Count == 0) { <span class="text-gold fst-italic">// En attente...</span> }
+                @foreach (var log in Enumerable.Reverse(logs)) { <div class="log-entry"><span class="log-time">@log.Time</span> @log.Message</div> }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="linkUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-hextech">
+            <div class="modal-header">
+                <h5 class="modal-title text-gold">Lier Compte</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control hextech-textarea mb-2" @bind="linkGameName" placeholder="GameName">
+                <input type="text" class="form-control hextech-textarea" @bind="linkTagLine" placeholder="TagLine">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" @onclick="ConfirmLinkUser">Valider</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editTipModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-hextech">
+            <div class="modal-header">
+                <h5 class="modal-title text-gold">Modifier le Conseil</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                @if (editingTip != null)
+                {
+                <p class="text-gold small mb-2">Pour @editingTip.ChampionName par @editingTip.AuthorName</p>
+                <textarea class="form-control hextech-textarea" rows="5" @bind="editingContent"></textarea>
                 }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-warning" @onclick="ConfirmEditTip">Sauvegarder</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="hextechConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-hextech shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-danger text-uppercase fw-bold">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> @confirmTitle
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="fs-5 text-light mb-0">@confirmMessage</p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" @onclick="ExecuteConfirmation">
+                    Confirmer
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 @code {
-    private bool isLoading = false;
-    private List<LogEntry> logs = new();
+private bool isSyncing = false;
+private bool isPurging = false;
 
-    private async Task SyncChampions()
-    {
-        isLoading = true;
-        AddLog("Démarrage de la synchronisation avec Riot API...");
-        
-        try
-        {
-            // Appel au client que nous venons de mettre à jour
-            var message = await LoLClient.AdminSyncChampionsAsync();
-            AddLog($"SUCCÈS : {message}");
-        }
-        catch (Exception ex)
-        {
-            AddLog($"ERREUR CRITIQUE : {ex.Message}");
-        }
-        
-        isLoading = false;
-    }
+private List<LogEntry> logs = new();
+private List<AppUserDto>? users;
+private List<AdminTipDto>? tips;
 
-    private async Task ResetDb()
-    {
-        isLoading = true;
-        AddLog("Demande de suppression de la base de données...");
+// Variables Modale User
+private AppUserDto? targetUser;
+private string linkGameName = "";
+private string linkTagLine = "";
 
-        try
-        {
-            var message = await LoLClient.AdminResetChampionsAsync();
-            AddLog($"INFO : {message}");
-        }
-        catch (Exception ex)
-        {
-            AddLog($"ERREUR : {ex.Message}");
-        }
+// Variables Modale Tip
+private AdminTipDto? editingTip;
+private string editingContent = "";
 
-        isLoading = false;
-    }
+// 🔴 Variables Modale Confirmation
+private string confirmTitle = "";
+private string confirmMessage = "";
+private Func<Task>? onConfirmAction;
 
-    private void AddLog(string message)
-    {
-        logs.Add(new LogEntry(DateTime.Now.ToLongTimeString(), message));
-    }
+protected override async Task OnInitializedAsync() => await LoadAllData();
 
-    record LogEntry(string Time, string Message);
+protected override async Task OnAfterRenderAsync(bool firstRender)
+{
+if (firstRender)
+{
+try {
+await JS.InvokeVoidAsync("eval", "var collapseElementList = [].slice.call(document.querySelectorAll('.collapse')); var collapseList = collapseElementList.map(function (collapseEl) { return new bootstrap.Collapse(collapseEl, { toggle: false }) })");
+} catch { }
+}
+}
+
+private async Task LoadAllData()
+{
+try
+{
+users = await LoLClient.AdminGetAllUsersAsync();
+tips = await LoLClient.AdminGetAllTipsAsync();
+}
+catch (Exception ex) { AddLog($"Erreur chargement : {ex.Message}"); }
+}
+
+// --- ACTIONS SYSTÈME ---
+private async Task SyncChampions() { /* ...code existant... */ isSyncing=true; try{var m=await LoLClient.AdminSyncChampionsAsync();AddLog(m);}catch(Exception e){AddLog(e.Message);} isSyncing=false; }
+private async Task ResetDb() { /* ...code existant... */ isPurging=true; try{var m=await LoLClient.AdminResetChampionsAsync();AddLog(m);}catch(Exception e){AddLog(e.Message);} isPurging=false; }
+
+// --- GESTION MODALE CONFIRMATION (NOUVEAU) ---
+private void RequestUnlinkUser(AppUserDto user)
+{
+confirmTitle = "Délier le compte ?";
+confirmMessage = $"Voulez-vous vraiment retirer le compte Riot de {user.Username} ?";
+onConfirmAction = async () =>
+{
+AddLog($"Dé-liaison {user.Username}...");
+if (await LoLClient.AdminUnlinkUserAsync(user.Id)) { AddLog("Fait."); await LoadAllData(); }
+else { AddLog("Erreur lors de la dé-liaison."); }
+};
+JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('hextechConfirmModal')).show()");
+}
+
+private void RequestDeleteTip(AdminTipDto tip)
+{
+confirmTitle = "Supprimer le conseil ?";
+confirmMessage = "Cette action est irréversible. Êtes-vous sûr de vouloir supprimer ce tip ?";
+onConfirmAction = async () =>
+{
+AddLog($"Suppression tip #{tip.Id}...");
+if (await LoLClient.AdminDeleteTipAsync(tip.Id)) { AddLog("Tip supprimé."); await LoadAllData(); }
+else { AddLog("Erreur suppression tip."); }
+};
+JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('hextechConfirmModal')).show()");
+}
+
+private async Task ExecuteConfirmation()
+{
+if (onConfirmAction != null) await onConfirmAction.Invoke();
+await JS.InvokeVoidAsync("eval", "bootstrap.Modal.getInstance(document.getElementById('hextechConfirmModal')).hide()");
+}
+
+// --- MODALES EXISTANTES (Link / Edit) ---
+private void OpenLinkModal(AppUserDto user)
+{
+targetUser = user; linkGameName = ""; linkTagLine = "";
+JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('linkUserModal')).show()");
+}
+
+private async Task ConfirmLinkUser()
+{
+if (targetUser == null) return;
+AddLog($"Liaison {targetUser.Username}...");
+if (await LoLClient.AdminLinkUserAsync(targetUser.Id, linkGameName, linkTagLine)) {
+AddLog("Réussi."); await LoadAllData();
+await JS.InvokeVoidAsync("eval", "bootstrap.Modal.getInstance(document.getElementById('linkUserModal')).hide()");
+} else { AddLog("Échec liaison."); }
+}
+
+private void OpenEditTipModal(AdminTipDto tip)
+{
+editingTip = tip; editingContent = tip.Content;
+JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('editTipModal')).show()");
+}
+
+private async Task ConfirmEditTip()
+{
+if (editingTip == null) return;
+if (await LoLClient.AdminUpdateTipAsync(editingTip.Id, editingContent)) {
+AddLog("Tip modifié."); await LoadAllData();
+await JS.InvokeVoidAsync("eval", "bootstrap.Modal.getInstance(document.getElementById('editTipModal')).hide()");
+} else { AddLog("Erreur modif."); }
+}
+
+private void AddLog(string message) => logs.Add(new LogEntry(DateTime.Now.ToLongTimeString(), message));
+record LogEntry(string Time, string Message);
 }
