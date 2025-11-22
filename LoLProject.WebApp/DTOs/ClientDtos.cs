@@ -15,6 +15,25 @@ public class ChampionDetailDto : ChampionDto
     public string Description { get; set; } = "";
     public string ImageUrl { get; set; } = "";
     public List<TipDto> Tips { get; set; } = new();
+    public ChampionStatsDto? Stats { get; set; }
+}
+
+//  DTO des Stats (Miroir de celui de l'API)
+public class ChampionStatsDto
+{
+    public double Hp { get; set; }
+    public double HpPerLevel { get; set; }
+    public double Mp { get; set; }
+    public double MpPerLevel { get; set; }
+    public double MoveSpeed { get; set; }
+    public double Armor { get; set; }
+    public double ArmorPerLevel { get; set; }
+    public double SpellBlock { get; set; }
+    public double SpellBlockPerLevel { get; set; }
+    public double AttackRange { get; set; }
+    public double AttackDamage { get; set; }
+    public double AttackDamagePerLevel { get; set; }
+    public double AttackSpeed { get; set; }
 }
 
 // --- Tips ---

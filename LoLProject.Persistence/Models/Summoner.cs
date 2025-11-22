@@ -1,4 +1,4 @@
-namespace LoLProject.Persistence.Models; // Au lieu de ApiService.Models
+namespace LoLProject.Persistence.Models;
 public class Summoner
 {
     public int Id { get; set; }

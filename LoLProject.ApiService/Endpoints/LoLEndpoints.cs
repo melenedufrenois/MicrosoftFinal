@@ -117,6 +117,7 @@ public static class LoLEndpoints
         group.MapGet("/champions/{id:int}", async (int id, AppDb db) =>
         {
             var champion = await db.Champions
+                .Include(c => c.Stats) // On inclut les stats du champion
                 .Include(c => c.Tips)
                 .ThenInclude(t => t.Author) // On inclut l'auteur pour avoir le pseudo
                 .FirstOrDefaultAsync(c => c.Id == id);
@@ -137,7 +138,17 @@ public static class LoLEndpoints
                     t.Content,
                     t.CreatedAt,
                     new AuthorResponseDto(t.Author.Username) // On ne prend que le username
-                )).ToList()
+                )).ToList(),
+                champion.Stats != null ? new ChampionStatsResponseDto(
+                    champion.Stats.Hp, champion.Stats.HpPerLevel,
+                    champion.Stats.Mp, champion.Stats.MpPerLevel,
+                    champion.Stats.MoveSpeed,
+                    champion.Stats.Armor, champion.Stats.ArmorPerLevel,
+                    champion.Stats.SpellBlock, champion.Stats.SpellBlockPerLevel,
+                    champion.Stats.AttackRange,
+                    champion.Stats.AttackDamage, champion.Stats.AttackDamagePerLevel,
+                    champion.Stats.AttackSpeed
+                ) : null
             );
 
             return Results.Ok(response);

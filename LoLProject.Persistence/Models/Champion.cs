@@ -16,4 +16,6 @@ public class Champion
     public string? IconUrl { get; set; } 
 
     public ICollection<ChampionTip> Tips { get; set; } = new List<ChampionTip>();
+    
+    public ChampionStat? Stats { get; set; }
 }

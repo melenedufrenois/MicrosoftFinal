@@ -11,11 +11,11 @@ public class AppDb(DbContextOptions<AppDb> options) : DbContext(options)
     public DbSet<Champion> Champions => Set<Champion>();
     public DbSet<ChampionTip> ChampionTips => Set<ChampionTip>();
     public DbSet<TipLike> TipLikes => Set<TipLike>();
+    public DbSet<ChampionStat> ChampionStats => Set<ChampionStat>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        // ... (Ton code de configuration reste identique) ...
         // Configuration de la relation User <-> Summoner (1 to 1)
         modelBuilder.Entity<AppUser>()
             .HasOne(a => a.Summoner)
@@ -37,5 +37,13 @@ public class AppDb(DbContextOptions<AppDb> options) : DbContext(options)
             .WithMany(u => u.Likes)
             .HasForeignKey(tl => tl.AppUserId)
             .OnDelete(DeleteBehavior.NoAction);
+        
+        // Configuration de la relation One-to-One (optionnel car EF est malin, mais plus sûr)
+        modelBuilder.Entity<Champion>()
+            .HasOne(c => c.Stats)
+            .WithOne(s => s.Champion)
+            .HasForeignKey<ChampionStat>(s => s.ChampionId)
+            .OnDelete(DeleteBehavior.Cascade); // Si on supprime un champion, on supprime ses stats
+
     }
 }
