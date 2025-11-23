@@ -1,0 +1,93 @@
+    /* Barre de recherche Hextech */
+.search-input {
+    background-color: #010a13;
+    border: 1px solid #463714;
+    color: #c8aa6e;
+    padding: 10px 15px;
+    font-size: 1.1rem;
+}
+
+.search-input:focus {
+    background-color: #010a13;
+    border-color: #c8aa6e;
+    color: #f0e6d2;
+    box-shadow: 0 0 10px rgba(200, 170, 110, 0.3);
+}
+
+.search-input::placeholder {
+    color: #5c5b57;
+}
+
+/* Carte Champion */
+.champ-card {
+    background-color: #091428;
+    border: 1px solid #463714;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+    height: 100%;
+}
+
+.champ-card:hover {
+    border-color: #c8aa6e;
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+/* Image du champion */
+.champ-img-container {
+    background-color: #010a13;
+    padding: 10px;
+    border-bottom: 1px solid #463714;
+    text-align: center;
+}
+
+.champ-img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border: 2px solid #c8aa6e;
+    /* Masque hexagonal (optionnel, sinon rond/carré c'est bien aussi) */
+    /* border-radius: 50%; */
+}
+
+/* Corps de la carte */
+.champ-body {
+    padding: 1rem;
+    text-align: center;
+}
+
+.champ-name {
+    color: #f0e6d2;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.champ-title {
+    color: #a09b8c;
+    font-size: 0.8rem;
+    font-style: italic;
+    margin-bottom: 1rem;
+    display: block; /* Force le retour à la ligne */
+    min-height: 2.4em; /* Hauteur fixe pour aligner les boutons */
+}
+
+/* Bouton d'action */
+.btn-details {
+    background: transparent;
+    border: 1px solid #c8aa6e;
+    color: #c8aa6e;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    width: 100%;
+    transition: all 0.2s;
+}
+
+.btn-details:hover {
+    background: #c8aa6e;
+    color: #091428;
+    font-weight: bold;
+}

@@ -1,0 +1,70 @@
+/* --- Style Général --- */
+.admin-header { border-bottom: 2px solid #c8aa6e; margin-bottom: 2rem; padding-bottom: 1rem; }
+.text-gold { color: #c8aa6e; }
+
+/* --- Animation Accordéon Smooth --- */
+.accordion-collapse {
+    transition: height 0.35s ease-in-out; /* Animation fluide */
+}
+
+/* Petite retouche pour l'icône joueur */
+.summoner-mini-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid #c8aa6e;
+    margin-right: 8px;
+}
+
+/* --- ACCORDION HEXTECH --- */
+.accordion-hextech { --bs-accordion-border-color: #463714; --bs-accordion-bg: transparent; }
+.accordion-hextech .accordion-item {
+    background-color: rgba(9, 20, 40, 0.8);
+    border: 1px solid #463714;
+    margin-bottom: 10px;
+}
+.accordion-hextech .accordion-button {
+    background: linear-gradient(90deg, #091428 0%, #1e2328 100%);
+    color: #c8aa6e;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-bottom: 1px solid #463714;
+}
+.accordion-hextech .accordion-button:not(.collapsed) {
+    background: linear-gradient(90deg, #463714 0%, #c8aa6e 100%);
+    color: #091428;
+    box-shadow: none;
+}
+.accordion-hextech .accordion-body { color: #f0e6d2; padding: 1.5rem; }
+
+.collapse { transition: height 0.4s ease; }
+
+/* --- Tableaux & Cartes --- */
+.hextech-table { width: 100%; border-collapse: separate; border-spacing: 0 5px; }
+.hextech-table thead th { color: #a09b8c; text-transform: uppercase; font-size: 0.8rem; padding: 10px; border-bottom: 1px solid #463714; }
+.hextech-table tbody tr { background-color: rgba(1, 10, 19, 0.6); transition: background 0.2s; }
+.hextech-table tbody tr:hover { background-color: rgba(20, 30, 50, 0.8); }
+.hextech-table td { padding: 12px; color: #f0e6d2; vertical-align: middle; border-top: 1px solid #1e2328; border-bottom: 1px solid #1e2328; }
+.hextech-table td:first-child { border-left: 3px solid #463714; border-radius: 4px 0 0 4px; }
+.hextech-table td:last-child { border-right: 1px solid #1e2328; border-radius: 0 4px 4px 0; }
+
+.hextech-card { background-color: rgba(9, 20, 40, 0.9); border: 1px solid #463714; color: #f0e6d2; transition: all 0.3s ease; }
+.hextech-card:hover { border-color: #c8aa6e; box-shadow: 0 0 15px rgba(200, 170, 110, 0.2); }
+.card-icon { font-size: 2.5rem; color: #c8aa6e; }
+
+.summoner-mini-icon { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #c8aa6e; margin-right: 8px; vertical-align: middle; }
+
+/* --- Console --- */
+.console-output {
+    background-color: #010a13; border: 1px solid #463714; color: #0ac8b9;
+    font-family: 'Consolas', monospace; padding: 1rem; height: 150px; overflow-y: auto; font-size: 0.85rem;
+}
+.log-entry { margin-bottom: 0.2rem; border-bottom: 1px solid rgba(30, 35, 40, 0.5); }
+.log-time { color: #5c5b57; margin-right: 10px; }
+
+/* --- Modales --- */
+.modal-content-hextech { background: linear-gradient(135deg, #091428 0%, #010a13 100%); border: 2px solid #c8aa6e; color: #f0e6d2; }
+.modal-header, .modal-footer { border-color: #463714; }
+.btn-close-white { filter: invert(1); }
+.hextech-textarea { background-color: #010a13; border: 1px solid #463714; color: #c8aa6e; }
+.hextech-textarea:focus { background-color: #010a13; border-color: #c8aa6e; color: #f0e6d2; box-shadow: 0 0 10px rgba(200, 170, 110, 0.2); }

@@ -1,105 +1,161 @@
+/* --- CONTENEUR PRINCIPAL (Sidebar Fixe) --- */
+.hextech-sidebar {
+    background: linear-gradient(180deg, #091428 0%, #0a323c 100%);
+    border-right: 2px solid #463714;
+    height: 100vh; /* Prend toute la hauteur de la fenêtre */
+    display: flex;
+    flex-direction: column;
+    position: sticky; /* Reste fixe pendant le scroll de la page principale */
+    top: 0;
+    z-index: 1000;
+}
+
+/* --- EN-TÊTE (Marque) --- */
+.hextech-brand {
+    background-color: #091428;
+    border-bottom: 1px solid #c8aa6e;
+    padding: 1rem;
+    text-align: center;
+    flex-shrink: 0; /* Ne rétrécit pas */
+}
+
+.hextech-brand a {
+    color: #c8aa6e !important;
+    font-family: serif;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    font-size: 1.2rem;
+    text-shadow: 0 0 5px rgba(200, 170, 110, 0.5);
+}
+
+/* --- ZONE SCROLLABLE --- */
+.nav-scrollable {
+    flex: 1; /* Prend tout l'espace vertical restant */
+    overflow-y: auto; /* Active le scroll vertical si nécessaire */
+    overflow-x: hidden;
+}
+
+/* Barre de défilement Hextech fine */
+.nav-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+.nav-scrollable::-webkit-scrollbar-track {
+    background: #091428;
+}
+.nav-scrollable::-webkit-scrollbar-thumb {
+    background: #463714;
+    border-radius: 3px;
+}
+.nav-scrollable::-webkit-scrollbar-thumb:hover {
+    background: #c8aa6e;
+}
+
+/* --- ITEMS NAVIGATION --- */
+.nav-item {
+    font-size: 0.9rem;
+    padding-bottom: 0.2rem;
+}
+
+.nav-item ::deep .nav-link {
+    color: #f0e6d2 !important; /* Blanc cassé Hextech */
+    background: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    border-radius: 0;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    line-height: 3rem;
+    width: 100%;
+    transition: all 0.3s ease;
+    padding-left: 1.5rem;
+}
+
+.nav-item ::deep .nav-link:hover {
+    background: linear-gradient(90deg, rgba(200, 170, 110, 0.1) 0%, transparent 100%);
+    color: #c8aa6e !important;
+    border-left-color: #c8aa6e;
+    padding-left: 1.8rem; /* Petit décalage animé */
+}
+
+.nav-item ::deep .nav-link.active {
+    background: linear-gradient(90deg, rgba(200, 170, 110, 0.2) 0%, transparent 100%);
+    color: #c8aa6e !important;
+    border-left-color: #c8aa6e;
+    font-weight: 600;
+    text-shadow: 0 0 8px rgba(200, 170, 110, 0.4);
+}
+
+/* --- ICONES & SEPARATEURS --- */
+.bi {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+    color: #a09b8c;
+    transition: color 0.3s;
+}
+
+.nav-item ::deep .nav-link:hover .bi,
+.nav-item ::deep .nav-link.active .bi {
+    color: #c8aa6e;
+}
+
+.nav-separator {
+    border-top: 1px solid #463714;
+    margin: 0.5rem 1.5rem;
+    opacity: 0.5;
+}
+
+.nav-title-admin {
+    font-size: 0.7rem;
+    color: #6e6046;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+/* --- MOBILE (Navbar Toggler) --- */
 .navbar-toggler {
     appearance: none;
     cursor: pointer;
     width: 3.5rem;
     height: 2.5rem;
-    color: white;
+    color: #c8aa6e;
     position: absolute;
     top: 0.5rem;
     right: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(255, 255, 255, 0.1);
+    border: 1px solid #463714;
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28200, 170, 110, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(9, 20, 40, 0.5);
+    display: none; /* Caché par défaut sur Desktop */
+    z-index: 1001;
 }
 
 .navbar-toggler:checked {
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(200, 170, 110, 0.1);
 }
 
-.top-row {
-    min-height: 3.5rem;
-    background-color: rgba(0,0,0,0.4);
-}
-
-.navbar-brand {
-    font-size: 1.1rem;
-}
-
-.bi {
-    display: inline-block;
-    position: relative;
-    width: 1.25rem;
-    height: 1.25rem;
-    margin-right: 0.75rem;
-    top: -1px;
-    background-size: cover;
-}
-
-.bi-house-door-fill-nav-menu {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-house-door-fill' viewBox='0 0 16 16'%3E%3Cpath d='M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5Z'/%3E%3C/svg%3E");
-}
-
-.bi-plus-square-fill-nav-menu {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-plus-square-fill' viewBox='0 0 16 16'%3E%3Cpath d='M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z'/%3E%3C/svg%3E");
-}
-
-.bi-list-nested-nav-menu {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-list-nested' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M4.5 11.5A.5.5 0 0 1 5 11h10a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 1 3h10a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5z'/%3E%3C/svg%3E");
-}
-
-.nav-item {
-    font-size: 0.9rem;
-    padding-bottom: 0.5rem;
-}
-
-    .nav-item:first-of-type {
-        padding-top: 1rem;
+/* --- RESPONSIVE (Mobile < 641px) --- */
+@media (max-width: 640.98px) {
+    .hextech-sidebar {
+        height: auto; /* La sidebar s'adapte au contenu */
+        min-height: auto;
     }
 
-    .nav-item:last-of-type {
-        padding-bottom: 1rem;
-    }
-
-    .nav-item ::deep .nav-link {
-        color: #d7d7d7;
-        background: none;
-        border: none;
-        border-radius: 4px;
-        height: 3rem;
-        display: flex;
-        align-items: center;
-        line-height: 3rem;
-        width: 100%;
-    }
-
-.nav-item ::deep a.active {
-    background-color: rgba(255,255,255,0.37);
-    color: white;
-}
-
-.nav-item ::deep .nav-link:hover {
-    background-color: rgba(255,255,255,0.1);
-    color: white;
-}
-
-.nav-scrollable {
-    display: none;
-}
-
-.navbar-toggler:checked ~ .nav-scrollable {
-    display: block;
-}
-
-@media (min-width: 641px) {
     .navbar-toggler {
-        display: none;
+        display: block; /* Affiche le burger */
     }
 
     .nav-scrollable {
-        /* Never collapse the sidebar for wide screens */
-        display: block;
+        display: none; /* Cache le menu par défaut */
+        max-height: 0;
+        transition: max-height 0.3s ease-out;
+        overflow: hidden;
+    }
 
-        /* Allow sidebar to scroll for tall menus */
-        height: calc(100vh - 3.5rem);
+    /* Quand le burger est coché, on affiche le menu */
+    .navbar-toggler:checked ~ .nav-scrollable {
+        display: block;
+        max-height: 500px; /* Hauteur max arbitraire pour l'animation */
         overflow-y: auto;
     }
 }

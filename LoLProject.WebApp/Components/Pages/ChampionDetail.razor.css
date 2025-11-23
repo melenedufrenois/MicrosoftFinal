@@ -1,0 +1,48 @@
+/* --- Styles existants (Carte, Stats, etc.) --- */
+.hextech-detail-card { background: linear-gradient(135deg, #091428 0%, #0a323c 100%); border: 2px solid #c8aa6e; box-shadow: 0 0 20px rgba(0, 0, 0, 0.6); color: #f0e6d2; overflow: hidden; position: relative; }
+.champ-bg-image { width: 100%; height: 100%; object-fit: cover; border-right: 1px solid #463714; mask-image: linear-gradient(to right, black 60%, transparent 100%); }
+.champ-name-detail { font-size: 3.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; background: linear-gradient(to bottom, #f0e6d2, #c8aa6e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.champ-title-detail { color: #a09b8c; font-size: 1.5rem; font-style: italic; font-family: serif; margin-bottom: 1.5rem; display: block; }
+.lore-text { color: #cdbe91; font-size: 1rem; line-height: 1.6; border-left: 3px solid #463714; padding-left: 1.5rem; max-height: 150px; overflow-y: auto; }
+.stats-container { background-color: rgba(1, 10, 19, 0.6); border: 1px solid #463714; padding: 1rem; margin-top: 1.5rem; border-radius: 4px; }
+.stat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.9rem; }
+.stat-label { color: #a09b8c; text-transform: uppercase; font-size: 0.8rem; width: 100px; }
+.stat-value { color: #f0e6d2; font-weight: bold; width: 50px; text-align: right; margin-right: 10px;}
+.hextech-progress { flex-grow: 1; height: 6px; background-color: #091428; border: 1px solid #463714; position: relative; }
+.hextech-progress-bar { height: 100%; background: linear-gradient(90deg, #463714 0%, #c8aa6e 100%); box-shadow: 0 0 5px rgba(200, 170, 110, 0.5); }
+.tips-section-title { color: #c8aa6e; border-bottom: 1px solid #463714; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+.add-tip-card { background-color: #010a13; border: 1px solid #463714; padding: 1.5rem; }
+.hextech-textarea { background-color: #091428; border: 1px solid #463714; color: #f0e6d2; resize: none; }
+.hextech-textarea::placeholder { color: #a09b8c; opacity: 0.8; font-style: italic; }
+.hextech-textarea:focus { background-color: #091428; border-color: #c8aa6e; color: #f0e6d2; box-shadow: 0 0 10px rgba(200, 170, 110, 0.2); }
+.tip-item { background-color: rgba(9, 20, 40, 0.8); border: 1px solid #1e2328; border-left: 3px solid #463714; margin-bottom: 1rem; transition: all 0.3s; }
+.tip-item:hover { border-left-color: #c8aa6e; background-color: rgba(10, 50, 60, 0.4); }
+.tip-author { color: #c8aa6e; font-weight: bold; font-size: 0.9rem; }
+.tip-time { color: #5c5b57; font-size: 0.8rem; }
+.tip-content { color: #f0e6d2; font-size: 1rem; margin-top: 0.5rem; }
+
+/* --- 🔴 NOUVEAUX STYLES (COPIÉS DE ADMIN) --- */
+
+/* Bouton Carré Rouge (Style Admin) */
+.btn-square {
+    width: 32px; height: 32px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    border: 1px solid;
+    transition: all 0.2s ease;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.btn-square-danger { color: #ff4d4d; border-color: #5c2b2b; }
+.btn-square-danger:hover { background-color: #912323; color: white; border-color: #ff4d4d; box-shadow: 0 0 8px rgba(255, 77, 77, 0.4); }
+
+/* Style Modale Hextech */
+.modal-hextech-content {
+    background: linear-gradient(135deg, #091428 0%, #010a13 100%);
+    border: 2px solid #c8aa6e;
+    color: #f0e6d2;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8);
+}
+.modal-hextech-header { border-bottom: 1px solid #463714; }
+.modal-hextech-footer { border-top: 1px solid #463714; }
+.btn-close-hextech { filter: invert(1) sepia(1) saturate(5) hue-rotate(180deg); }
