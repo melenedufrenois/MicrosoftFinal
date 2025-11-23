@@ -111,5 +111,3 @@ dotnet test
 ## 👥 Auteurs
 
 Projet réalisé par **Mehdi TRARI** & **Mélène DUFRENOIS**.
-
-```
