@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\LoLProject.ApiService\LoLProject.ApiService.csproj" />
@@ -21,6 +21,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <UserSecretsId>afd19a53-baae-4739-86d7-e06c4bda4a1c</UserSecretsId>
   </PropertyGroup>
 
 </Project>

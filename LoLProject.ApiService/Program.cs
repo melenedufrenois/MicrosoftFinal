@@ -7,78 +7,52 @@ using LoLProject.Persistence;
 using LoLProject.Persistence.Models;
 using LoLProject.ApiService.Endpoints;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Observabilité/health/logs partagés
+// --- 1. SERVICES (BUILDER) ---
+
 builder.AddServiceDefaults();
-
-// OpenAPI
 builder.Services.AddOpenApi();
-
-// Cache en mémoire
 builder.Services.AddMemoryCache();
 
-// Intégration Aspire + EF Core (utilise ConnectionStrings__lolproject)
-builder.AddSqlServerDbContext<AppDb>(connectionName: "lolproject");
+// 👇 CORRECTION IMPORTANTE : Enregistrement de la DB
+// On n'enregistre SQL Server QUE si on n'est pas en mode "Testing".
+// En mode "Testing", c'est ta Factory de test qui injectera la base en mémoire.
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.AddSqlServerDbContext<AppDb>(connectionName: "lolproject");
+}
 
-// On nettoie les mappings de claims par défaut de .NET
+// Nettoyage des claims
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
-// 🔐 Authentification JWT Bearer (tokens Keycloak)
+// Authentification Keycloak
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
         options.Authority = builder.Configuration["Authentication:OIDC:Authority"];
         options.Audience  = builder.Configuration["Authentication:OIDC:Audience"];
-        
-        // 1. On autorise le HTTP (pas de SSL obligatoire)
         options.RequireHttpsMetadata = false; 
-
-        // 2. On relâche la validation stricte
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            // TRES IMPORTANT : On désactive la vérification de l'émetteur (Issuer)
-            // Ça règle le conflit "localhost" vs "keycloak:8090"
             ValidateIssuer = false, 
-            
-            // IMPORTANT : On désactive la vérification de l'audience
-            // Ça règle le problème si le mapper "api" est mal fait dans Keycloak
             ValidateAudience = false,
-
-            // On garde quand même la vérification de la date (expiration)
             ValidateLifetime = true,
-
-            // On garde la vérification de la signature (que ça vient bien de notre Keycloak)
             ValidateIssuerSigningKey = true,
-            
-            // Mapping des rôles
             NameClaimType = "name",
-            RoleClaimType = "realm_access.roles", // Essaie ça, c'est souvent le défaut Keycloak
-        };
-
-        // Events pour débugger (optionnel, tu peux laisser ou enlever)
-        options.Events = new JwtBearerEvents
-        {
-            OnAuthenticationFailed = context =>
-            {
-                Console.WriteLine($"🛑 Auth Failed: {context.Exception.Message}");
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                Console.WriteLine("✅ Token accepté (Sécurité réduite)");
-                return Task.CompletedTask;
-            }
+            RoleClaimType = "realm_access.roles",
         };
     });
 
 builder.Services.AddAuthorization();
-
 builder.Services.AddHttpClient<LoLProject.ApiService.Services.RiotService>();
 
+// --- 2. CONSTRUCTION DE L'APP ---
+
 var app = builder.Build();
+
+// --- 3. MIDDLEWARE & PIPELINE ---
 
 if (app.Environment.IsDevelopment())
 {
@@ -86,20 +60,37 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// 🔑 Middleware d'authentification / autorisation
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Enregistrement des routes
 app.MapLoLEndpoints();
-// Appliquer les migrations + seed au démarrage
-using (var scope = app.Services.CreateScope())
+
+// 👇 MIGRATION SÉCURISÉE (Une seule fois !)
+// On ne lance la migration QUE si on n'est pas en test.
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDb>();
-    db.Database.Migrate();
+    try 
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+            // Double sécurité : on vérifie que c'est bien une base relationnelle (SQL)
+            if (db.Database.IsRelational())
+            {
+                db.Database.Migrate();
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        // On log juste l'erreur pour ne pas crasher si la DB n'est pas encore prête
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Erreur lors de la migration de la base de données.");
+    }
 }
 
-// Demo météo (laisse ça public si tu veux)
+// Demo météo
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy",
@@ -124,3 +115,5 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
+public partial class Program { }

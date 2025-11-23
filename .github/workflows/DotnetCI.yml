@@ -24,3 +24,6 @@ jobs:
 
     - name: Build
       run: dotnet build --no-restore LoLProject.AppHost/LoLProject.AppHost.csproj
+
+    - name: Test
+        run: dotnet test LoLProject.Tests/LoLProject.Tests.csproj --no-restore --verbosity normal

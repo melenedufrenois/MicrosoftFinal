@@ -1,96 +1,5 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-@inject NavigationManager Navigation
-@inherits LayoutComponentBase
-@using LoLProject.WebApp.Clients 
-@inject AuthenticationStateProvider AuthStateProvider
-@inject LoLClient LoLClient
-
-<style>
-    /* Reset de base pour le layout */
-    .page {
-        background-color: #040f1b; /* Fond très sombre pour toute l'app */
-        color: #f0e6d2; /* Texte blanc cassé/beige */
-        min-height: 100vh;
-        display: flex;
-    }
-
-    main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* Sidebar : gérée par NavMenu, mais on assure l'espace */
-    .sidebar {
-        width: 250px;
-        min-width: 250px; 
-    }
-
-    /* Top Row Hextech */
-    .top-row {
-        background: linear-gradient(90deg, #091428 0%, #0a323c 100%);
-        border-bottom: 1px solid #463714;
-        height: 3.5rem;
-        display: flex;
-        align-items: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-    }
-
-    /* Liens du Top Row */
-    .top-row a {
-        color: #c8aa6e;
-        text-decoration: none;
-        font-weight: 600;
-        transition: color 0.2s;
-    }
-
-    .top-row a:hover {
-        color: #f0e6d2;
-        text-decoration: underline;
-    }
-
-    /* Boutons Hextech (Petite version) */
-    .btn-hextech-sm {
-        background-color: transparent;
-        border: 1px solid #c8aa6e;
-        color: #c8aa6e;
-        font-size: 0.85rem;
-        padding: 0.25rem 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        transition: all 0.3s;
-    }
-
-    .btn-hextech-sm:hover {
-        background-color: #c8aa6e;
-        color: #091428;
-        box-shadow: 0 0 10px rgba(200, 170, 110, 0.4);
-    }
-
-    /* Contenu Principal */
-    .content {
-        padding: 2rem !important; /* Force le padding */
-    }
-
-    /* Gestion Responsive (Mobile) */
-    @@media (max-width: 640.98px) {
-        .page {
-            flex-direction: column;
-        }
-        
-        .sidebar {
-            width: 100%;
-            height: auto;
-            min-height: auto;
-        }
-
-        .top-row {
-            position: sticky;
-            top: 0;
-            z-index: 1;
-        }
-    }
-</style>
+﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
 
 <div class="page">
     <div class="sidebar">
@@ -99,21 +8,18 @@
 
     <main>
         <div class="top-row px-4 d-flex align-items-center justify-content-between">
-            <!-- Lien About à gauche -->
             <a href="https://x.com/DemonRoubaisien" target="_blank" class="d-flex align-items-center gap-2">
                 <i class="bi bi-info-circle"></i> <span class="d-none d-md-inline">Démon Roubaisien</span>
             </a>
 
-            <!-- Section Utilisateur à droite -->
             <div class="d-flex align-items-center">
                 <AuthorizeView>
                     <Authorized Context="auth">
                         @{
                             var user = auth.User;
                             var name = user.Identity?.Name ?? "Invocateur";
-                            // Récupération propre des rôles pour l'affichage
                             var roles = user.Claims
-                                .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role) // Utilise le type standard mappé
+                                .Where(c => c.Type == System.Security.Claims.ClaimTypes.Role)
                                 .Select(c => c.Value)
                                 .ToList();
                         }
@@ -148,44 +54,8 @@
     </main>
 </div>
 
-<div id="blazor-error-ui" data-nosnippet class="alert alert-warning m-0 rounded-0" style="display:none; position:fixed; bottom:0; width:100%; z-index:1000;">
+<div id="blazor-error-ui" data-nosnippet class="alert alert-warning m-0 rounded-0">
     An unhandled error has occurred.
     <a href="." class="reload fw-bold">Reload</a>
     <span class="dismiss ms-2 cursor-pointer">🗙</span>
 </div>
-
-@code {
-    
-    protected override async Task OnInitializedAsync()
-    {
-        // On récupère l'état d'authentification actuel
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        // Si l'utilisateur est connecté (Keycloak), on assure qu'il est en BDD locale
-        if (user.Identity is { IsAuthenticated: true })
-        {
-            // Sync silencieux pour s'assurer que l'utilisateur existe en base
-            // On utilise un try/catch pour ne pas bloquer l'UI si l'API est down
-            try 
-            {
-                await LoLClient.SyncUserAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Erreur sync user: {ex.Message}");
-            }
-        }
-    }
-
-    private void Login()
-    {
-        var returnUrl = Uri.EscapeDataString(Navigation.Uri);
-        Navigation.NavigateTo($"authentication/login?returnUrl={returnUrl}", forceLoad: true);
-    }
-
-    private void Logout()
-    {
-        Navigation.NavigateTo("/authentication/logout", forceLoad: true);
-    }
-}

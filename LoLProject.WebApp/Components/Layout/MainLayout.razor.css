@@ -1,61 +1,79 @@
+/* Reset de base pour le layout */
 .page {
-    position: relative;
+    background-color: #040f1b; /* Fond très sombre pour toute l'app */
+    color: #f0e6d2; /* Texte blanc cassé/beige */
+    min-height: 100vh;
     display: flex;
-    flex-direction: column;
 }
 
 main {
     flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
+/* Sidebar : gérée par NavMenu, mais on assure l'espace */
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+    width: 250px;
+    min-width: 250px;
 }
 
+/* Top Row Hextech */
 .top-row {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
-    justify-content: flex-end;
+    background: linear-gradient(90deg, #091428 0%, #0a323c 100%);
+    border-bottom: 1px solid #463714;
     height: 3.5rem;
     display: flex;
     align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        white-space: nowrap;
-        margin-left: 1.5rem;
-        text-decoration: none;
-    }
+/* Liens du Top Row */
+.top-row a {
+    color: #c8aa6e;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
 
-    .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
-        text-decoration: underline;
-    }
+.top-row a:hover {
+    color: #f0e6d2;
+    text-decoration: underline;
+}
 
-    .top-row ::deep a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+/* Boutons Hextech (Petite version) */
+.btn-hextech-sm {
+    background-color: transparent;
+    border: 1px solid #c8aa6e;
+    color: #c8aa6e;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s;
+}
 
+.btn-hextech-sm:hover {
+    background-color: #c8aa6e;
+    color: #091428;
+    box-shadow: 0 0 10px rgba(200, 170, 110, 0.4);
+}
+
+/* Contenu Principal */
+.content {
+    padding: 2rem !important; /* Force le padding */
+}
+
+/* Gestion Responsive (Mobile) */
 @media (max-width: 640.98px) {
-    .top-row {
-        justify-content: space-between;
-    }
-
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        margin-left: 0;
-    }
-}
-
-@media (min-width: 641px) {
     .page {
-        flex-direction: row;
+        flex-direction: column;
     }
 
     .sidebar {
-        width: 250px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
+        width: 100%;
+        height: auto;
+        min-height: auto;
     }
 
     .top-row {
@@ -63,25 +81,14 @@ main {
         top: 0;
         z-index: 1;
     }
-
-    .top-row.auth ::deep a:first-child {
-        flex: 1;
-        text-align: right;
-        width: 0;
-    }
-
-    .top-row, article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
-    }
 }
 
+/* Style pour la boite d'erreur (optionnel mais utile) */
 #blazor-error-ui {
     color-scheme: light only;
     background: lightyellow;
     bottom: 0;
     box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
-    box-sizing: border-box;
     display: none;
     left: 0;
     padding: 0.6rem 1.25rem 0.7rem 1.25rem;
@@ -90,9 +97,9 @@ main {
     z-index: 1000;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
