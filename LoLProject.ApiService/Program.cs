@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using LoLProject.Persistence;
 using LoLProject.Persistence.Models;
 using LoLProject.ApiService.Endpoints;
+using LoLProject.ApiService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,7 +47,7 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddHttpClient<LoLProject.ApiService.Services.RiotService>();
+builder.Services.AddHttpClient<IRiotService, RiotService>();
 
 // --- 2. CONSTRUCTION DE L'APP ---
 

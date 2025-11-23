@@ -36,7 +36,7 @@ public static class LoLEndpoints
             var response = new AppUserResponseDto(
                 appUser.Id,
                 appUser.Username,
-                appUser.Email,
+                appUser.Email ?? "", 
                 appUser.Summoner != null 
                     ? new SummonerResponseDto(
                         appUser.Summoner.GameName, 
@@ -78,7 +78,7 @@ public static class LoLEndpoints
             var response = new AppUserResponseDto(
                 appUser.Id,
                 appUser.Username,
-                appUser.Email,
+                appUser.Email ?? "",
                 appUser.Summoner != null 
                     ? new SummonerResponseDto(
                         appUser.Summoner.GameName, 
@@ -93,7 +93,7 @@ public static class LoLEndpoints
         .RequireAuthorization();
         
         // 4. Endpoint Admin : Sync Champions
-        group.MapPost("/admin/sync-champions", async (RiotService riotService) =>
+        group.MapPost("/admin/sync-champions", async (IRiotService riotService) =>
         {
             try 
             {
@@ -130,9 +130,9 @@ public static class LoLEndpoints
                 champion.Id,
                 champion.Name,
                 champion.Title,
-                champion.IconUrl,
-                champion.Description,
-                champion.ImageUrl,
+                champion.IconUrl ?? "",
+                champion.Description ?? "",
+                champion.ImageUrl ?? "",
                 champion.Tips.Select(t => new TipResponseDto(
                     t.Id,
                     t.Content,
@@ -186,7 +186,7 @@ public static class LoLEndpoints
         
         // 8. POST : Lier un compte Riot
         // On utilise 'LinkSummonerRequest request' pour lire le Body JSON
-        group.MapPost("/dashboard/link", async (LinkSummonerRequest request, AppDb db, RiotService riotService, ClaimsPrincipal user) =>
+        group.MapPost("/dashboard/link", async (LinkSummonerRequest request, AppDb db, IRiotService riotService, ClaimsPrincipal user) =>
             {
                 var keycloakId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(keycloakId)) return Results.Unauthorized();
@@ -227,7 +227,7 @@ public static class LoLEndpoints
             .RequireAuthorization();
         
         // 9. GET : Récupérer les stats récentes du joueur lié
-        group.MapGet("/dashboard/stats", async (AppDb db, RiotService riotService, ClaimsPrincipal user) =>
+        group.MapGet("/dashboard/stats", async (AppDb db, IRiotService riotService, ClaimsPrincipal user) =>
             {
                 var keycloakId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(keycloakId)) return Results.Unauthorized();
@@ -258,7 +258,7 @@ public static class LoLEndpoints
             var response = users.Select(u => new AppUserResponseDto(
                 u.Id,
                 u.Username,
-                u.Email,
+                u.Email ?? "",
                 u.Summoner != null 
                     ? new SummonerResponseDto(u.Summoner.GameName, u.Summoner.TagLine, u.Summoner.ProfileIconId, u.Summoner.SummonerLevel)
                     : null
@@ -284,7 +284,7 @@ public static class LoLEndpoints
 
         // 12. ADMIN : Lier un compte
         // 🛑 Changement ici : {userId:guid} et Guid userId
-        group.MapPost("/admin/users/{userId:guid}/link", async (Guid userId, LinkSummonerRequest request, AppDb db, RiotService riotService) =>
+        group.MapPost("/admin/users/{userId:guid}/link", async (Guid userId, LinkSummonerRequest request, AppDb db, IRiotService riotService) =>
             {
                 var user = await db.AppUsers.Include(u => u.Summoner).FirstOrDefaultAsync(u => u.Id == userId);
                 if (user == null) return Results.NotFound("Utilisateur introuvable");
@@ -325,7 +325,7 @@ public static class LoLEndpoints
                     t.CreatedAt,
                     t.Author.Username,
                     t.Champion.Name,
-                    t.Champion.IconUrl
+                    t.Champion.IconUrl ?? ""
                 ));
 
                 return Results.Ok(response);

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace LoLProject.ApiService.Services;
 
-public class RiotService(HttpClient httpClient, IConfiguration configuration, IServiceProvider serviceProvider, ILogger<RiotService> logger, IMemoryCache cache)
+public class RiotService(HttpClient httpClient, IConfiguration configuration, IServiceProvider serviceProvider, ILogger<RiotService> logger, IMemoryCache cache) : IRiotService
 {
     // RECUPERER LES CHAMPIONS DE RIOT ET LES SYNC DANS NOTRE BDD
     public async Task<int> SyncChampionsAsync()

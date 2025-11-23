@@ -1,98 +1,100 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using LoLProject.ApiService.DTOs;
 using LoLProject.Persistence;
 using LoLProject.Persistence.Models;
+using LoLProject.WebApp.DTOs;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LoLProject.Tests;
 
-public class DashboardEndpointsTests : IClassFixture<CustomWebApplicationFactory<Program>>
+public class ChampionsEndpointsTests : IClassFixture<CustomWebApplicationFactory<Program>>
 {
     private readonly CustomWebApplicationFactory<Program> _factory;
 
-    public DashboardEndpointsTests(CustomWebApplicationFactory<Program> factory)
+    public ChampionsEndpointsTests(CustomWebApplicationFactory<Program> factory)
     {
         _factory = factory;
     }
 
     [Fact]
-    public async Task GetDashboard_ShouldReturnUnauthorized_WhenNotAuthenticated()
-    {
-        // Arrange : Client standard sans auth configurée
-        // Pour ce test, on doit créer un client qui NE passe PAS par le handler de test par défaut
-        // (C'est un peu tricky, donc on va simplifier : par défaut, le client n'envoie pas de header Authorization)
-        var client = _factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
-        {
-            AllowAutoRedirect = false
-        });
-
-        // Act
-        // Note: Si le système force l'auth "Test" partout, ce test pourrait renvoyer 200.
-        // Dans ce cas précis, on teste la logique métier plutôt que l'infrastructure Auth.
-        // Si tu veux tester le 401, il ne faudrait pas mettre le DefaultScheme dans la Factory.
-        // Passons directement au test positif qui est plus intéressant pour ton projet.
-    }
-
-    [Fact]
-    public async Task SyncUser_ShouldCreateUser_WhenAuthenticated()
+    public async Task GetChampions_ShouldReturnData()
     {
         // Arrange
         var client = _factory.CreateClient();
-        // On ajoute un faux token pour déclencher le TestAuthHandler
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Test");
 
         // Act
-        var response = await client.PostAsync("/api/lol/sync-user", null);
-
-        // Assert
-        response.EnsureSuccessStatusCode(); // 200 OK
-        
-        // Vérifier que l'utilisateur a bien été créé en base
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<AppDb>();
-            var user = db.AppUsers.FirstOrDefault(u => u.KeycloakId == "test-keycloak-id-123");
-            
-            Assert.NotNull(user);
-            Assert.Equal("TestUser", user.Username);
-        }
-    }
-
-    [Fact]
-    public async Task GetDashboard_ShouldReturnUserData_WhenUserExists()
-    {
-        // Arrange
-        var client = _factory.CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Test");
-
-        // On doit d'abord créer l'utilisateur en base pour qu'il puisse récupérer son dashboard
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<AppDb>();
-            // On nettoie pour être sûr
-            db.Database.EnsureDeleted();
-            db.Database.EnsureCreated();
-
-            db.AppUsers.Add(new AppUser
-            {
-                Id = Guid.NewGuid(),
-                KeycloakId = "test-keycloak-id-123", // Doit correspondre au TestAuthHandler
-                Username = "TestUser",
-                Email = "test@example.com"
-            });
-            await db.SaveChangesAsync();
-        }
-
-        // Act
-        var response = await client.GetAsync("/api/lol/dashboard");
+        var response = await client.GetAsync("/api/lol/champions");
 
         // Assert
         response.EnsureSuccessStatusCode();
-        var dashboard = await response.Content.ReadFromJsonAsync<AppUserResponseDto>();
+        var champions = await response.Content.ReadFromJsonAsync<List<ChampionDto>>(); // ou RiotChampionDto selon ton DTO
+        Assert.NotNull(champions);
+    }
+
+    [Fact]
+    public async Task GetChampionDetail_ShouldIncludeStatsAndTips()
+    {
+        int champId;
         
-        Assert.NotNull(dashboard);
-        Assert.Equal("TestUser", dashboard.Username);
+        // 1. Arrange : On ajoute un champion unique pour ce test
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+            
+            // ⚠️ Pas de EnsureDeleted() ici pour ne pas casser les autres tests qui tournent en parallèle !
+            
+            var champ = new Champion 
+            { 
+                RiotId = "Jinx_" + Guid.NewGuid(), // ID Unique pour éviter les collisions
+                Name = "Jinx", 
+                Title = "Loose Cannon", 
+                RiotKey = "222", 
+                Description = "Boom!", 
+                ImageUrl = "img", 
+                IconUrl = "icon",
+                Stats = new ChampionStat { Hp = 600, AttackDamage = 60 } 
+            };
+            
+            // On ajoute un utilisateur factice pour le tip
+            var user = new AppUser { Id = Guid.NewGuid(), KeycloakId = "user_" + Guid.NewGuid(), Username = "Tester" };
+            
+            db.AppUsers.Add(user);
+            db.Champions.Add(champ);
+            await db.SaveChangesAsync(); // On sauvegarde pour générer l'ID
+
+            // On ajoute le tip lié
+            db.ChampionTips.Add(new ChampionTip 
+            { 
+                Content = "Get Excited!", 
+                AppUserId = user.Id, // Utilisation de la FK directe si possible, sinon via l'objet
+                ChampionId = champ.Id, 
+                CreatedAt = DateTime.UtcNow 
+            });
+            await db.SaveChangesAsync();
+            
+            champId = champ.Id; // 👈 C'est ici qu'on capture le BON ID généré
+        }
+
+        var client = _factory.CreateClient();
+
+        // 2. Act : On appelle l'API avec l'ID précis qu'on vient de créer
+        var response = await client.GetAsync($"/api/lol/champions/{champId}");
+
+        // 3. Assert
+        response.EnsureSuccessStatusCode(); // Vérifie que ce n'est pas 404
+        
+        var detail = await response.Content.ReadFromJsonAsync<ChampionDetailResponseDto>();
+
+        Assert.NotNull(detail);
+        Assert.Equal("Jinx", detail.Name);
+        
+        // Vérification des inclusions
+        Assert.NotNull(detail.Stats);
+        Assert.Equal(600, detail.Stats.Hp);
+        
+        Assert.NotEmpty(detail.Tips);
+        Assert.Equal("Get Excited!", detail.Tips[0].Content);
     }
 }
