@@ -12,18 +12,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
-
-    - name: Restore dependencies
-      run: dotnet restore LoLProject.AppHost/LoLProject.AppHost.csproj
-
-    - name: Build
-      run: dotnet build --no-restore LoLProject.AppHost/LoLProject.AppHost.csproj
-
-    - name: Test
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      
+      - name: Restore dependencies
+        run: dotnet restore LoLProject.sln
+      
+      - name: Build
+        run: dotnet build --no-restore LoLProject.sln
+      
+      - name: Test
         run: dotnet test LoLProject.Tests/LoLProject.Tests.csproj --no-restore --verbosity normal
