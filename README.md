@@ -1,103 +1,113 @@
-<<<<<<< Updated upstream
-# DevMobileFinal
-=======
-# 🎮 LoL Project — Application de Dashboard League of Legends
+# 🎮 LoL Project — Nexus Dashboard
 
-Bienvenue sur **LoL Project**, une application distribuée développée dans le cadre du projet **.NET / Aspire**.
-Elle permet aux joueurs de *League of Legends* de consulter un wiki des champions, partager des astuces, et lier leur compte Riot pour consulter leurs statistiques.
+Application web distribuée développée dans le cadre du projet semestriel **.NET / Aspire** (M2 CYBER).
+L'application permet de consulter un Wiki League of Legends, de gérer des astuces communautaires et d'analyser un compte joueur en temps réel via l'API Riot Games.
 
----
+-----
 
-## 🚀 Technologies Utilisées
+## 📋 Prérequis Techniques
 
-* **Orchestration :** .NET Aspire 9.0
-* **Frontend :** Blazor Server (.NET 9) + Bootstrap
-* **Backend :** ASP.NET Core Minimal API
-* **Base de données :** SQL Server (Entity Framework Core)
-* **Authentification :** Keycloak (OpenID Connect)
+Pour lancer l'orchestrateur et les conteneurs, vous avez besoin de :
 
----
+1.  **Docker Desktop** (installé et lancé).
+2.  **.NET 9.0 SDK**.
+3.  Une clé API Riot (Development Key) à récupérer sur [developer.riotgames.com](https://developer.riotgames.com/).
 
-## ✨ Fonctionnalités
+-----
 
-### 🔓 Publiques
+## ⚙️ Configuration (Obligatoire)
 
-* **Accueil Hextech :** Page d'accueil immersive.
-* **Wiki Champions :** Liste complète des champions avec moteur de recherche.
-* **Détails Champion :** Lore, image et astuces communautaires.
+Le projet respecte les bonnes pratiques de sécurité ("Clean Code") et ne stocke aucun secret dans le code source.
+**Avant de lancer l'application**, vous devez configurer les secrets utilisateurs en local via le terminal :
 
-### 🔐 Utilisateurs Connectés
-
-* **Dashboard Personnel :** Liaison du compte Riot (simulation API Riot), affichage du niveau et de l’icône.
-* **Partage de Tips :** Ajout d’astuces pour chaque champion.
-
-### 🛡️ Administrateurs (Rôle : *Gestionnaire*)
-
-* **Panel Admin :**
-
-  * Synchronisation des données via l’API Riot
-  * Réinitialisation de la base de données
-
----
-
-## 🛠️ Prérequis
-
-* Docker Desktop (lancé)
-* .NET 9 SDK
-* Git
-
----
-
-## 🔧 Installation & Lancement
-
-### 1. Cloner le dépôt
+### 1\. Configurer l'API (Clé Riot)
 
 ```bash
-git clone https://github.com/melenedufrenois/MicrosoftFinal.git
-cd MicrosoftFinal
+cd LoLProject.ApiService
+dotnet user-secrets init
+dotnet user-secrets set "RiotApi:ApiKey" "VOTRE-CLE-RIOT-ICI"
 ```
 
-### 2. Lancer l'application (Aspire)
+### 2\. Configurer le Frontend (Secret Keycloak)
 
-Placez-vous dans le dossier racine et exécutez :
+*Le ClientSecret par défaut est configuré dans Keycloak, mais pour simuler une config propre :*
+
+```bash
+cd ../LoLProject.WebApp
+dotnet user-secrets init
+dotnet user-secrets set "Authentication:OIDC:ClientSecret" "SwtGRcBEIBs5F9OoJI9Em544BOB5uI5p"
+```
+
+*(Note : Retournez à la racine du projet après ces commandes : `cd ..`)*
+
+-----
+
+## 🚀 Lancement de l'Application
+
+Le projet utilise **.NET Aspire** pour orchestrer l'API, le Frontend, la Base de données (SQL Server) et l'Authentification (Keycloak).
+
+1.  Placez-vous à la racine du projet.
+2.  Lancez l'hôte d'application :
+
+<!-- end list -->
 
 ```bash
 dotnet run --project LoLProject.AppHost/LoLProject.AppHost.csproj
 ```
 
-### 3. Accéder au Dashboard
+3.  Une URL va s'afficher dans la console (ex: `http://localhost:15063`). Cliquez dessus pour ouvrir le **Dashboard Aspire**.
+4.  Depuis ce dashboard, vous pourrez accéder à tous les services :
+      * **webapp** : Le site principal (Frontend Blazor).
+      * **apiservice** : L'API Backend (Swagger).
+      * **keycloak** : La console d'administration (User: `admin` / Pass: `admin`).
+      * **sql** : Le serveur de base de données.
 
-Une fois lancé, ouvrez le lien **localhost** affiché dans la console pour accéder au Dashboard Aspire.
+-----
 
-Vous pourrez y retrouver :
+## ✨ Fonctionnalités & Contraintes Respectées
 
-* **Frontend (WebApp)**
-* **API (Swagger)**
-* **Keycloak (Administration)**
+### 1\. Authentification & Rôles (Keycloak)
 
----
+  * **Serveur OIDC :** Keycloak tourne dans un conteneur géré par Aspire.
+  * **Rôle Utilisateur :** Accès au Dashboard personnel et ajout de Tips.
+  * **Rôle Admin (Gestionnaire) :** Accès au panneau d'administration (bouton visible dans le menu latéral).
 
-## 🔑 Comptes de Test
+### 2\. Pages & Accès
 
-Si vous avez recréé la base ou utilisez l'import Keycloak fourni :
+  * 🟢 **Publique :** Page d'accueil, Liste des Champions (Wiki).
+  * 🟢 **Publique :** Détail d'un champion (Consultation des stats/lore).
+  * 🟠 **Authentifié :** Mon Dashboard (Liaison API Riot, Historique, Rang, CS/Min).
+  * 🟠 **Authentifié :** Ajout et suppression de ses propres "Tips" (Conseils).
+  * 🔴 **Admin :** Page `/admin` pour synchroniser les données Riot, purger la BDD et gérer les utilisateurs.
 
-* **Utilisateur :** `mehdi / mehdi` *(Rôle : admin)* (non fonctionnel pour le role)
-* **Admin Keycloak :** `admin / admin`
+### 3\. Données & Architecture
 
----
+  * **Base de données :** SQL Server via Entity Framework Core.
+  * **Relations :** \* `AppUser` 1-1 `Summoner`
+      * `Champion` 1-n `ChampionTip`
+      * `Champion` 1-1 `ChampionStat`
+  * **Architecture :** Séparation stricte Frontend (Blazor) / Backend (Minimal API) / Persistence / ServiceDefaults.
+  * **CI/CD :** Workflow GitHub Actions exécutant les tests unitaires et d'intégration à chaque push.
 
-## 🏗️ Architecture
+-----
 
-Le projet suit une architecture claire et modulaire :
+## 🧪 Tests
 
-* **LoLProject.AppHost :** Orchestration Aspire
-* **LoLProject.ApiService :** Logique métier + accès BDD (DTOs anti-références)
-* **LoLProject.WebApp :** Interface Blazor
-* **LoLProject.Persistence :** Modèle de données partagé (EF Core)
+Le projet contient une suite de tests (xUnit) couvrant :
 
----
+  * Les endpoints publics (Champions).
+  * Les endpoints protégés (Dashboard, User Sync).
+  * La logique métier (Calcul KDA, Winrate).
+  * La sécurité (Impossibilité de supprimer le contenu d'autrui).
 
-## 👥 Équipe
+Pour lancer les tests (qui utilisent une base de données en mémoire isolée) :
 
-Projet réalisé par **Mehdi TRARI & Mélène DUFRENOIS** | M2 CYBER
->>>>>>> Stashed changes
+```bash
+dotnet test
+```
+
+-----
+
+## 👥 Auteurs
+
+Projet réalisé par **Mehdi TRARI** & **Mélène DUFRENOIS**.
