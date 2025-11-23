@@ -1,7 +1,5 @@
 # 🎮 LoL Project — Nexus Dashboard
 
-![Build Status](https://github.com/melenedufrenois/MicrosoftFinal/actions/workflows/DotnetCi.yml/badge.svg)
-
 Bienvenue sur **LoL Project**, une application distribuée développée dans le cadre du projet **.NET / Aspire**.
 Elle permet aux joueurs de *League of Legends* de consulter un wiki des champions, partager des astuces, et analyser leurs statistiques en temps réel via l'API officielle de Riot Games.
 
