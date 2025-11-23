@@ -8,7 +8,7 @@
 
     <main>
         <div class="top-row px-4 d-flex align-items-center justify-content-between">
-            <a href="https://x.com/DemonRoubaisien" target="_blank" class="d-flex align-items-center gap-2">
+            <a href="https://x.com/DemonRoubaisien" target="_blank" class="d-flex align-items-center gap-2 text-decoration-none">
                 <i class="bi bi-info-circle"></i> <span class="d-none d-md-inline">Démon Roubaisien</span>
             </a>
             <div class="d-flex align-items-center">
@@ -47,9 +47,22 @@
             </div>
         </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
+        <div class="content-wrapper">
+            <article class="content px-4">
+                @Body
+            </article>
+
+            <footer class="hextech-footer">
+                <div class="container text-center">
+                    <p class="mb-2 legal-text">
+                        LoL Project n'est pas approuvé par Riot Games et ne reflète pas les vues ou les opinions de Riot Games ou de quiconque officiellement impliqué dans la production ou la gestion de League of Legends.
+                    </p>
+                    <small class="copyright-text">
+                        &copy; 2025 - Projet Aspire & Blazor
+                    </small>
+                </div>
+            </footer>
+        </div>
     </main>
 </div>
 

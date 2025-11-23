@@ -1,47 +1,85 @@
-/* Reset de base pour le layout */
+/* Reset de base */
 .page {
-    background-color: #040f1b; /* Fond très sombre pour toute l'app */
-    color: #f0e6d2; /* Texte blanc cassé/beige */
-    min-height: 100vh;
+    background-color: #040f1b;
+    color: #f0e6d2;
+    height: 100vh; /* Force la hauteur écran */
     display: flex;
+    overflow: hidden; /* Empêche le scroll global */
 }
 
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    min-width: 250px;
+    background-color: #091428; /* Assure le fond */
+    z-index: 100;
+}
+
+/* Main prend le reste */
 main {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0; /* Important pour Flexbox */
 }
 
-/* Sidebar : gérée par NavMenu, mais on assure l'espace */
-.sidebar {
-    width: 250px;
-    min-width: 250px;
-}
-
-/* Top Row Hextech */
+/* Top Row */
 .top-row {
     background: linear-gradient(90deg, #091428 0%, #0a323c 100%);
     border-bottom: 1px solid #463714;
     height: 3.5rem;
+    flex-shrink: 0; /* Ne rétrécit pas */
     display: flex;
     align-items: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    z-index: 50;
 }
 
-/* Liens du Top Row */
 .top-row a {
     color: #c8aa6e;
-    text-decoration: none;
-    font-weight: 600;
     transition: color 0.2s;
 }
+.top-row a:hover { color: #f0e6d2; }
 
-.top-row a:hover {
-    color: #f0e6d2;
-    text-decoration: underline;
+/* --- WRAPPER CONTENU + FOOTER --- */
+/* C'est lui qui scroll, pas le body */
+.content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Scroll vertical ici */
+    scroll-behavior: smooth;
 }
 
-/* Boutons Hextech (Petite version) */
+/* Le contenu pousse le footer en bas */
+.content {
+    padding: 2rem !important;
+    flex: 1 0 auto; /* Grandit pour remplir l'espace */
+}
+
+/* --- STYLE DU FOOTER --- */
+.hextech-footer {
+    background: linear-gradient(0deg, #050a10 0%, #091428 100%);
+    border-top: 2px solid #463714;
+    padding: 2rem 1rem;
+    margin-top: auto; /* Sécurité flexbox */
+    flex-shrink: 0; /* Ne s'écrase pas */
+    position: relative;
+}
+
+/* Ligne décorative dorée */
+.hextech-footer::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 40%; height: 1px;
+    background: linear-gradient(90deg, transparent, #c8aa6e, transparent);
+}
+
+.legal-text { color: #5c5b57; font-size: 0.75rem; max-width: 700px; margin: 0 auto; line-height: 1.5; }
+.copyright-text { color: #a09b8c; font-family: monospace; letter-spacing: 1px; }
+
+/* Boutons Hextech SM */
 .btn-hextech-sm {
     background-color: transparent;
     border: 1px solid #c8aa6e;
@@ -52,54 +90,23 @@ main {
     letter-spacing: 0.5px;
     transition: all 0.3s;
 }
-
 .btn-hextech-sm:hover {
     background-color: #c8aa6e;
     color: #091428;
     box-shadow: 0 0 10px rgba(200, 170, 110, 0.4);
 }
 
-/* Contenu Principal */
-.content {
-    padding: 2rem !important; /* Force le padding */
-}
-
-/* Gestion Responsive (Mobile) */
+/* Mobile */
 @media (max-width: 640.98px) {
-    .page {
-        flex-direction: column;
-    }
-
-    .sidebar {
-        width: 100%;
-        height: auto;
-        min-height: auto;
-    }
-
-    .top-row {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
+    .page { flex-direction: column; height: auto; overflow: auto; }
+    .sidebar { width: 100%; height: auto; }
+    .content-wrapper { height: auto; overflow: visible; }
+    .top-row { position: sticky; top: 0; }
 }
 
-/* Style pour la boite d'erreur (optionnel mais utile) */
 #blazor-error-ui {
-    color-scheme: light only;
-    background: lightyellow;
-    bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
-    display: none;
-    left: 0;
-    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
-    position: fixed;
-    width: 100%;
-    z-index: 1000;
+    color-scheme: light only; background: lightyellow; bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2); display: none; left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem; position: fixed; width: 100%; z-index: 1000;
 }
-
-#blazor-error-ui .dismiss {
-    cursor: pointer;
-    position: absolute;
-    right: 0.75rem;
-    top: 0.5rem;
-}
+#blazor-error-ui .dismiss { cursor: pointer; position: absolute; right: 0.75rem; top: 0.5rem; }

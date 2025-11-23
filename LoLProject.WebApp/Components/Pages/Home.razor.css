@@ -1,0 +1,39 @@
+/* Petit style custom pour l'ambiance Hextech */
+.hero-section {
+    background: linear-gradient(135deg, #091428 0%, #0a323c 100%);
+    color: #f0e6d2;
+    padding: 5rem 0;
+    border-bottom: 3px solid #c8aa6e;
+}
+
+.hextech-btn {
+    background-color: #c8aa6e;
+    color: #091428;
+    border: 1px solid #f0e6d2;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.hextech-btn:hover {
+    background-color: #f0e6d2;
+    color: #0a323c;
+    box-shadow: 0 0 15px rgba(200, 170, 110, 0.6);
+}
+
+.feature-card {
+    background-color: #091428;
+    border: 1px solid #463714;
+    transition: transform 0.3s;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    border-color: #c8aa6e;
+}
+
+.text-gold {
+    color: #c8aa6e !important;
+}
